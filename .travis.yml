@@ -12,32 +12,32 @@ php:
   - '8.0'
 
 script:
-    - curl -L -o reflectivedoc.php https://www.monperrus.net/martin/reflectivedoc.php.txt
-    - curl -L -o gakowiki-syntax.php https://www.monperrus.net/martin/gakowiki-syntax.php.txt
-    - phpunit BibtexbrowserTest.php
+  - curl -L -o reflectivedoc.php https://www.monperrus.net/martin/reflectivedoc.php.txt
+  - curl -L -o gakowiki-syntax.php https://www.monperrus.net/martin/gakowiki-syntax.php.txt
+  - phpunit BibtexbrowserTest.php
 
-    # now testing this version of bibtexbrowser with wp-publications
-    # Installing WP-CLI
-    - curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-    - chmod 755 wp-cli.phar
-    - WPCLI=/tmp/wp
-    - mv wp-cli.phar $WPCLI
-    # Installing wordpress with wp-cli
-    - $WPCLI core download
-    - mysql -u travis -e "CREATE DATABASE IF NOT EXISTS wp" 
-    - $WPCLI config create --dbname=wp --dbuser=travis
-    - $WPCLI core install --url=http://bibtexbrowser.com --title="bibtexbrowser wordpress" --admin_user=root --admin_email=martin.monperrus@gnieh.org
-    # installing wp-cli/restful, which is required to render shortcodes with wp-cli
-    - $WPCLI package install wp-cli/restful
-    - $WPCLI core version
-    # installing plugin wp-publications
-    - $WPCLI plugin install https://github.com/monperrus/wp-publications/archive/refs/heads/master.zip --activate
-    # there is no need to create a post, because one activation task of wp-publications is to create a fake post
-    #- $WPCLI post create --post_title=test --post_content='[wp-publications bib="sample.bib" all=true]'
-    - cp bibtexbrowser.php ./wp-content/plugins/wp-publications/
-    - echo "<?php  define('BIBTEXBROWSER_USE_PROGRESSIVE_ENHANCEMENT',false);?>" > ./wp-content/plugins/wp-publications/bibtexbrowser.local.php
-    - $WPCLI rest post list --slug=wp-publications-example --field=content | tee before.txt
-    # do we still have the reference output? (useful for detecting changes in Wordpress or WP-CLI) (diff exits with 1 if there is a difference)
-    - diff reference-output-wp-publications.txt before.txt
+  # now testing this version of bibtexbrowser with wp-publications
+  # Installing WP-CLI
+  - curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+  - chmod 755 wp-cli.phar
+  - WPCLI=/tmp/wp
+  - mv wp-cli.phar $WPCLI
+  # Installing wordpress with wp-cli
+  - $WPCLI core download
+  - mysql -u travis -e "CREATE DATABASE IF NOT EXISTS wp"
+  - $WPCLI config create --dbname=wp --dbuser=travis
+  - $WPCLI core install --url=http://bibtexbrowser.com --title="bibtexbrowser wordpress" --admin_user=root --admin_email=martin.monperrus@gnieh.org
+  # installing wp-cli/restful, which is required to render shortcodes with wp-cli
+  - $WPCLI package install wp-cli/restful
+  - $WPCLI core version
+  # installing plugin wp-publications
+  - $WPCLI plugin install https://github.com/monperrus/wp-publications/archive/refs/heads/master.zip --activate
+  # there is no need to create a post, because one activation task of wp-publications is to create a fake post
+  #- $WPCLI post create --post_title=test --post_content='[wp-publications bib="sample.bib" all=true]'
+  - cp bibtexbrowser.php ./wp-content/plugins/wp-publications/
+  - echo "<?php  define('BIBTEXBROWSER_USE_PROGRESSIVE_ENHANCEMENT',false);?>" > ./wp-content/plugins/wp-publications/bibtexbrowser.local.php
+  - $WPCLI rest post list --slug=wp-publications-example --field=content | tee before.txt
+  # do we still have the reference output? (useful for detecting changes in Wordpress or WP-CLI) (diff exits with 1 if there is a difference)
+  - diff reference-output-wp-publications.txt before.txt
 
 sudo: false

@@ -1,15 +1,16 @@
 <?php
+
 namespace BibtexBrowser\BibtexBrowser;
 
 /** represents a bibliographic database that contains a set of bibliographic entries.
-usage:
-<pre>
-$db = new BibDataBase();
-$db->load('bibacid-utf8.bib');
-$query = array('author'=>'martin', 'year'=>2008);
-foreach ($db->multisearch($query) as $bibentry) { echo $bibentry->getTitle(); }
-</pre>
-*/
+ * usage:
+ * <pre>
+ * $db = new BibDataBase();
+ * $db->load('bibacid-utf8.bib');
+ * $query = array('author'=>'martin', 'year'=>2008);
+ * foreach ($db->multisearch($query) as $bibentry) { echo $bibentry->getTitle(); }
+ * </pre>
+ */
 class BibDataBase
 {
     /** A hash table from keys (e.g. Goody1994) to bib entries (BibEntry instances). */
@@ -30,7 +31,7 @@ class BibDataBase
     }
 
     /** Updates a database (replaces the new bibtex entries by the most recent ones) */
-    public function update($filename)
+    public function update($filename): void
     {
         $this->from_files[] = $filename;
         $this->update_internal($filename, null);
@@ -43,7 +44,7 @@ class BibDataBase
     }
 
     /** See update */
-    public function update_internal($resource_name, $resource)
+    public function update_internal($resource_name, $resource): void
     {
         $empty_array = [];
         $db = new BibDBBuilder();
@@ -59,8 +60,7 @@ class BibDataBase
             if (!isset($this->bibdb[$b->getKey()])) {
                 //echo 'adding...<br/>';
                 $this->addEntry($b);
-            }
-            // update entry
+            } // update entry
             elseif (isset($this->bibdb[$b->getKey()]) && ($b->getText() !== $this->bibdb[$b->getKey()]->getText())) {
                 //echo 'replacing...<br/>';
                 $this->bibdb[$b->getKey()] = $b;
@@ -70,17 +70,17 @@ class BibDataBase
         // some entries have been removed
         foreach ($this->bibdb as $e) {
             if (!isset($result[$e->getKey()])
-      && $e->filename==$resource_name // bug reported by Thomas on Dec 4 2012
-     ) {
+                && $e->filename == $resource_name // bug reported by Thomas on Dec 4 2012
+            ) {
                 //echo 'deleting...<br/>';
                 unset($this->bibdb[$e->getKey()]);
             }
         }
 
         // some @string have been removed
-        foreach ($this->stringdb as $k=>$e) {
+        foreach ($this->stringdb as $k => $e) {
             if (!isset($db->stringdb[$k])
-      && $e->filename==$resource_name) {
+                && $e->filename == $resource_name) {
                 //echo 'deleting...<br/>';
                 unset($this->stringdb[$e->name]);
             }
@@ -97,7 +97,7 @@ class BibDataBase
     /** Returns the $n latest modified bibtex entries/ */
     public function getLatestEntries($n)
     {
-        $order='compare_bib_entry_by_mtime';
+        $order = 'compare_bib_entry_by_mtime';
         $array = $this->bibdb; // array passed by value
         uasort($array, $order);
         return array_slice($array, 0, $n);
@@ -109,11 +109,13 @@ class BibDataBase
     {
         return $this->bibdb;
     }
+
     /** tests wheter the database contains a bib entry with $key */
     public function contains($key): bool
     {
         return isset($this->bibdb[$key]);
     }
+
     /** Returns all entries categorized by types. The returned value is
      * a hashtable from types to arrays of bib entries.
      */
@@ -140,20 +142,20 @@ class BibDataBase
      * The returned array is a hash table with keys <FirstName LastName>
      * and values <LastName, FirstName>.
      */
-    public function authorIndex()
+    public function authorIndex(): array
     {
         $tmp = [];
         foreach ($this->bibdb as $bib) {
             foreach ($bib->getFormattedAuthorsArray() as $a) {
                 $a = strip_tags($a);
                 //we use an array because several authors can have the same lastname
-                @$tmp[$bib->getLastName($a)]=$a;
+                @$tmp[$bib->getLastName($a)] = $a;
             }
         }
         ksort($tmp);
-        $result=[];
-        foreach ($tmp as $k=>$v) {
-            $result[$v]=$v;
+        $result = [];
+        foreach ($tmp as $k => $v) {
+            $result[$v] = $v;
         }
 
         return $result;
@@ -161,7 +163,7 @@ class BibDataBase
 
     /** Generates and returns an array consisting of all tags.
      */
-    public function tagIndex()
+    public function tagIndex(): array
     {
         $result = [];
         foreach ($this->bibdb as $bib) {
@@ -178,9 +180,10 @@ class BibDataBase
         return $result;
     }
 
-    /** Generates and returns an array consisting of all years.
+    /**
+     * Generates and returns an array consisting of all years.
      */
-    public function yearIndex()
+    public function yearIndex(): array
     {
         $result = [];
         foreach ($this->bibdb as $bib) {
@@ -188,25 +191,25 @@ class BibDataBase
                 continue;
             }
             $year = strtolower($bib->getYearRaw());
-            $yearInt = (int) $year;
+            $yearInt = (int)$year;
 
             // Allow for ordering of non-string values ('in press' etc.)
             switch ($year) {
-    case (string) $yearInt: // Sorry for this hacky type-casting
-      $key = $year;
-      break;
-    case Q_YEAR_INPRESS:
-      $key = PHP_INT_MAX + ORDER_YEAR_INPRESS;
-      break;
-    case Q_YEAR_ACCEPTED:
-      $key = PHP_INT_MAX + ORDER_YEAR_ACCEPTED;
-      break;
-    case Q_YEAR_SUBMITTED:
-      $key = PHP_INT_MAX + ORDER_YEAR_SUBMITTED;
-      break;
-    default:
-      $key = PHP_INT_MAX + ORDER_YEAR_OTHERNONINT;
-  }
+                case (string)$yearInt: // Sorry for this hacky type-casting
+                    $key = $year;
+                    break;
+                case Q_YEAR_INPRESS:
+                    $key = PHP_INT_MAX + ORDER_YEAR_INPRESS;
+                    break;
+                case Q_YEAR_ACCEPTED:
+                    $key = PHP_INT_MAX + ORDER_YEAR_ACCEPTED;
+                    break;
+                case Q_YEAR_SUBMITTED:
+                    $key = PHP_INT_MAX + ORDER_YEAR_SUBMITTED;
+                    break;
+                default:
+                    $key = PHP_INT_MAX + ORDER_YEAR_OTHERNONINT;
+            }
 
             $result[$key] = $year;
         }
@@ -222,10 +225,10 @@ class BibDataBase
     }
 
     /** Adds a new bib entry to the database. */
-    public function addEntry($entry)
+    public function addEntry($entry): void
     {
         if (!$entry->hasField('key')) {
-            throw new \Exception('error: a bibliographic entry must have a key '.$entry->getText());
+            throw new \Exception('error: a bibliographic entry must have a key ' . $entry->getText());
         }
         // we keep its insertion order
         $entry->order = count($this->bibdb);
@@ -237,7 +240,7 @@ class BibDataBase
      * Returns an array containing all bib entries matching the given
      * type.
      */
-    public function searchType($type)
+    public function searchType(string $type): array
     {
         $result = [];
         foreach ($this->bibdb as $bib) {
@@ -253,7 +256,7 @@ class BibDataBase
      */
     public function multisearch($query)
     {
-        if (count($query)<1) {
+        if (count($query) < 1) {
             return [];
         }
         if (isset($query[Q_ALL])) {
@@ -266,33 +269,33 @@ class BibDataBase
             $entryisselected = true;
             foreach ($query as $field => $fragment) {
                 $field = strtolower($field);
-                if ($field==Q_SEARCH) {
+                if ($field == Q_SEARCH) {
                     // we search in the whole bib entry
                     if (!$bib->hasPhrase($fragment)) {
                         $entryisselected = false;
                         break;
                     }
-                } elseif ($field==Q_EXCLUDE) {
+                } elseif ($field == Q_EXCLUDE) {
                     if ($bib->hasPhrase($fragment)) {
                         $entryisselected = false;
                         break;
                     }
-                } elseif ($field==Q_TYPE || $field==BibEntry::Q_INNER_TYPE) {
+                } elseif ($field == Q_TYPE || $field == BibEntry::Q_INNER_TYPE) {
                     // types are always exact search
                     // remarks Ken
                     // type:"book" should only select book (and not inbook, book, bookchapter)
                     // this was before in Dispatch:type()
                     // moved here so that it is also used by AcademicDisplay:search2html()
-                    if (!$bib->hasPhrase('^('.$fragment.')$', BibEntry::Q_INNER_TYPE)) {
+                    if (!$bib->hasPhrase('^(' . $fragment . ')$', BibEntry::Q_INNER_TYPE)) {
                         $entryisselected = false;
                         break;
                     }
-                } elseif ($field==Q_KEYS) {
-                    if (! in_array($bib->getKey(), $query[Q_KEYS])) {
+                } elseif ($field == Q_KEYS) {
+                    if (!in_array($bib->getKey(), $query[Q_KEYS])) {
                         $entryisselected = false;
                         break;
                     }
-                } elseif ($field==Q_RANGE) {
+                } elseif ($field == Q_RANGE) {
                     $year = $bib->getYear();
                     $withinRange = false;
 
@@ -328,7 +331,7 @@ class BibDataBase
     {
         $s = '';
         foreach ($this->stringdb as $entry) {
-            $s.=$entry->toString()."\n";
+            $s .= $entry->toString() . "\n";
         }
         return $s;
     }
@@ -339,8 +342,8 @@ class BibDataBase
         $s = '';
         $s .= $this->stringEntriesText();
         foreach ($this->bibdb as $bibentry) {
-            $s.=$bibentry->getText()."\n";
+            $s .= $bibentry->getText() . "\n";
         }
         return $s;
     }
-} // end class
+}

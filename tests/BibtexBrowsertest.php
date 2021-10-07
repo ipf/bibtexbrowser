@@ -4,9 +4,17 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser\tests;
 
-class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
+use BibtexBrowser\BibtexBrowser\AcademicDisplay;
+use BibtexBrowser\BibtexBrowser\BibDataBase;
+use BibtexBrowser\BibtexBrowser\BibEntryDisplay;
+use BibtexBrowser\BibtexBrowser\PagedDisplay;
+use BibtexBrowser\BibtexBrowser\SimpleDisplay;
+use BibtexBrowser\BibtexBrowser\SimpleDisplayExt;
+use PHPUnit\Framework\TestCase;
+
+class BibtexBrowsertest extends TestCase
 {
-    public function setUp():void
+    public function setUp(): void
     {
         // resetting the default link style
         bibtexbrowser_configure('BIBTEXBROWSER_LINK_STYLE', 'bib2links_default');
@@ -23,17 +31,20 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
             include(__DIR__ . '/gakowiki-syntax.php');
         }
         $result = create_wiki_parser()->parse(file_get_contents('README.wiki'));
-        $this->assertEquals(1, strpos($result, 'bibtexbrowser is a PHP script that creates publication lists from Bibtex files'));
+        $this->assertEquals(
+            1,
+            strpos($result, 'bibtexbrowser is a PHP script that creates publication lists from Bibtex files')
+        );
     }
 
     public function createDB()
     {
         return $this->_createDB("@book{aKey,title={A Book},author={Martin Monperrus},publisher={Springer},year=2009}\n"
-    ."@book{aKey/withSlash,title={Slash Dangerous for web servers},author={Ap Ache},publisher={Springer},year=2010}\n"
-    ."@article{aKeyA,title={An Article},author={Foo Bar and Jane Doe},volume=5,journal=\"New Results\",year=2009,pages={1-2}}\n");
+            . "@book{aKey/withSlash,title={Slash Dangerous for web servers},author={Ap Ache},publisher={Springer},year=2010}\n"
+            . "@article{aKeyA,title={An Article},author={Foo Bar and Jane Doe},volume=5,journal=\"New Results\",year=2009,pages={1-2}}\n");
     }
 
-    public function _createDB($content, $fakefilename='inline')
+    public function _createDB($content, $fakefilename = 'inline')
     {
         $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $content);
@@ -47,26 +58,38 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
     public function test_bibentry_to_html_book()
     {
         $btb = $this->createDB();
-        $first_entry=$btb->getEntryByKey('aKey');
+        $first_entry = $btb->getEntryByKey('aKey');
 
         // default style
         $this->assertEquals('A Book (Martin Monperrus), Springer, 2009. [bibtex]', strip_tags($first_entry->toHTML()));
-        $this->assertEquals('<span itemscope="" itemtype="https://schema.org/ScholarlyArticle"><span class="bibtitle"  itemprop="name">A Book</span> (<span class="bibauthor"><span itemprop="author" itemtype="http://schema.org/Person">Martin Monperrus</span></span>), <span class="bibpublisher">Springer</span>, <span itemprop="datePublished">2009</span>.<span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook&amp;rft.btitle=A+Book&amp;rft.genre=book&amp;rft.pub=Springer&amp;rfr_id=info%3Asid%2F%3A&amp;rft.date=2009&amp;rft.au=Martin+Monperrus"></span></span> <span class="bibmenu"><a class="biburl" title="aKey" href="bibtexbrowser.php?key=aKey&amp;bib=inline">[bibtex]</a></span>', $first_entry->toHTML());
+        $this->assertEquals(
+            '<span itemscope="" itemtype="https://schema.org/ScholarlyArticle"><span class="bibtitle"  itemprop="name">A Book</span> (<span class="bibauthor"><span itemprop="author" itemtype="http://schema.org/Person">Martin Monperrus</span></span>), <span class="bibpublisher">Springer</span>, <span itemprop="datePublished">2009</span>.<span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook&amp;rft.btitle=A+Book&amp;rft.genre=book&amp;rft.pub=Springer&amp;rfr_id=info%3Asid%2F%3A&amp;rft.date=2009&amp;rft.au=Martin+Monperrus"></span></span> <span class="bibmenu"><a class="biburl" title="aKey" href="bibtexbrowser.php?key=aKey&amp;bib=inline">[bibtex]</a></span>',
+            $first_entry->toHTML()
+        );
 
         // IEEE style
         bibtexbrowser_configure('BIBLIOGRAPHYSTYLE', 'JanosBibliographyStyle');
-        $this->assertEquals("Martin Monperrus, \"A Book\", Springer, 2009.\n [bibtex]", strip_tags($first_entry->toHTML()));
+        $this->assertEquals(
+            "Martin Monperrus, \"A Book\", Springer, 2009.\n [bibtex]",
+            strip_tags($first_entry->toHTML())
+        );
 
         // Vancouver style
         bibtexbrowser_configure('BIBLIOGRAPHYSTYLE', 'VancouverBibliographyStyle');
         $this->assertEquals("Martin Monperrus. A Book. Springer; 2009.\n [bibtex]", strip_tags($first_entry->toHTML()));
 
         // other methods
-        $this->assertEquals('<span class="bibmenu"><a class="biburl" title="aKey" href="bibtexbrowser.php?key=aKey&amp;bib=inline">[bibtex]</a></span>', $first_entry->bib2links());
-        $this->assertEquals('<a class="bibanchor" name=""></a>', $first_entry->anchor());
+        $this->assertEquals(
+            '<span class="bibmenu"><a class="biburl" title="aKey" href="bibtexbrowser.php?key=aKey&amp;bib=inline">[bibtex]</a></span>',
+            $first_entry->bib2links()
+        );
+        $this->assertEquals('<a class="bibanchor"></a>', $first_entry->anchor());
     }
 
-    public function extract_css_classes($str)
+    /**
+     * @throws \Exception
+     */
+    public function extract_css_classes($str): array
     {
         $xml = new \SimpleXMLElement($str);
         $css_classes = [];
@@ -80,7 +103,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
     public function test_bibentry_to_html_article()
     {
         $btb = $this->createDB();
-        $first_entry=$btb->getEntryByKey('aKeyA');
+        $first_entry = $btb->getEntryByKey('aKeyA');
         $this->assertEquals('1-2', $first_entry->getField('pages'));
         $this->assertEquals('1', $first_entry->getPages()[0]);
         $this->assertEquals('2', $first_entry->getPages()[1]);
@@ -88,27 +111,42 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         // default style
         bibtexbrowser_configure('BIBLIOGRAPHYSTYLE', 'DefaultBibliographyStyle');
         bibtexbrowser_configure('BIBTEXBROWSER_LINK_STYLE', 'nothing');
-        $this->assertEquals('An Article (Foo Bar and Jane Doe), In New Results, volume 5, 2009. ', strip_tags($first_entry->toHTML()));
-        $this->assertEquals('<span itemscope="" itemtype="http://schema.org/ScholarlyArticle"><span class="bibtitle"  itemprop="name">An Article</span> (<span class="bibauthor"><span itemprop="author" itemtype="http://schema.org/Person">Foo Bar</span> and <span itemprop="author" itemtype="http://schema.org/Person">Jane Doe</span></span>), <span class="bibbooktitle">In <span itemprop="isPartOf">New Results</span></span>, volume 5, <span itemprop="datePublished">2009</span>.<span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.atitle=An+Article&amp;rft.jtitle=New+Results&amp;rft.volume=5&amp;rft.issue=&amp;rft.pub=&amp;rfr_id=info%3Asid%2F%3A&amp;rft.date=2009&amp;rft.au=Foo+Bar&amp;rft.au=Jane+Doe"></span></span> ', $first_entry->toHTML());
+        $this->assertEquals(
+            'An Article (Foo Bar and Jane Doe), In New Results, volume 5, 2009. ',
+            strip_tags($first_entry->toHTML())
+        );
+        $this->assertEquals(
+            '<span itemscope="" itemtype="https://schema.org/ScholarlyArticle"><span class="bibtitle"  itemprop="name">An Article</span> (<span class="bibauthor"><span itemprop="author" itemtype="http://schema.org/Person">Foo Bar</span> and <span itemprop="author" itemtype="http://schema.org/Person">Jane Doe</span></span>), <span class="bibbooktitle">In <span itemprop="isPartOf">New Results</span></span>, volume 5, <span itemprop="datePublished">2009</span>.<span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.atitle=An+Article&amp;rft.jtitle=New+Results&amp;rft.volume=5&amp;rft.issue=&amp;rft.pub=&amp;rfr_id=info%3Asid%2F%3A&amp;rft.date=2009&amp;rft.au=Foo+Bar&amp;rft.au=Jane+Doe"></span></span> ',
+            $first_entry->toHTML()
+        );
 
         // listing the CSS classes
         $css_classes_before = $this->extract_css_classes($first_entry->toHTML());
 
         // IEEE style
         bibtexbrowser_configure('BIBLIOGRAPHYSTYLE', 'JanosBibliographyStyle');
-        $this->assertEquals("Foo Bar and Jane Doe, \"An Article\", In New Results, vol. 5, pp. 1-2, 2009.\n ", strip_tags($first_entry->toHTML()));
+        $this->assertEquals(
+            "Foo Bar and Jane Doe, \"An Article\", In New Results, vol. 5, pp. 1-2, 2009.\n ",
+            strip_tags($first_entry->toHTML())
+        );
         $css_classes_after = $this->extract_css_classes($first_entry->toHTML());
         // contract: make sure the Janos style and default style use the same CSS classes
         $this->assertEquals($css_classes_before, $css_classes_after);
 
         // Vancouver style
         bibtexbrowser_configure('BIBLIOGRAPHYSTYLE', 'VancouverBibliographyStyle');
-        $this->assertEquals("Foo Bar and Jane Doe. An Article. New Results. 2009;5:1-2.\n ", strip_tags($first_entry->toHTML()));
+        $this->assertEquals(
+            "Foo Bar and Jane Doe. An Article. New Results. 2009;5:1-2.\n ",
+            strip_tags($first_entry->toHTML())
+        );
 
         // changing the target
         bibtexbrowser_configure('BIBLIOGRAPHYSTYLE', 'DefaultBibliographyStyle');
         bibtexbrowser_configure('BIBTEXBROWSER_LINKS_TARGET', '_top');
-        $this->assertEquals('<span itemscope="" itemtype="http://schema.org/ScholarlyArticle"><span class="bibtitle"  itemprop="name">An Article</span> (<span class="bibauthor"><span itemprop="author" itemtype="http://schema.org/Person">Foo Bar</span> and <span itemprop="author" itemtype="http://schema.org/Person">Jane Doe</span></span>), <span class="bibbooktitle">In <span itemprop="isPartOf">New Results</span></span>, volume 5, <span itemprop="datePublished">2009</span>.<span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.atitle=An+Article&amp;rft.jtitle=New+Results&amp;rft.volume=5&amp;rft.issue=&amp;rft.pub=&amp;rfr_id=info%3Asid%2F%3A&amp;rft.date=2009&amp;rft.au=Foo+Bar&amp;rft.au=Jane+Doe"></span></span> ', $first_entry->toHTML());
+        $this->assertEquals(
+            '<span itemscope="" itemtype="https://schema.org/ScholarlyArticle"><span class="bibtitle"  itemprop="name">An Article</span> (<span class="bibauthor"><span itemprop="author" itemtype="http://schema.org/Person">Foo Bar</span> and <span itemprop="author" itemtype="http://schema.org/Person">Jane Doe</span></span>), <span class="bibbooktitle">In <span itemprop="isPartOf">New Results</span></span>, volume 5, <span itemprop="datePublished">2009</span>.<span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.atitle=An+Article&amp;rft.jtitle=New+Results&amp;rft.volume=5&amp;rft.issue=&amp;rft.pub=&amp;rfr_id=info%3Asid%2F%3A&amp;rft.date=2009&amp;rft.au=Foo+Bar&amp;rft.au=Jane+Doe"></span></span> ',
+            $first_entry->toHTML()
+        );
 
         // testing ABBRV_TYPE
         bibtexbrowser_configure('ABBRV_TYPE', 'year');
@@ -123,27 +161,27 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('', $first_entry->getAbbrv());
     }
 
-    public function testMultiSearch()
+    public function testMultiSearch(): void
     {
         $btb = $this->createDB();
-        $q=[Q_AUTHOR=>'monperrus'];
-        $results=$btb->multisearch($q);
+        $q = [Q_AUTHOR => 'monperrus'];
+        $results = $btb->multisearch($q);
         $entry = $results[0];
-        $this->assertTrue(count($results) == 1);
-        $this->assertTrue($entry->getTitle() == 'A Book');
+        $this->assertCount(1, $results);
+        $this->assertSame($entry->getTitle(), 'A Book');
     }
 
     public function testMultiSearch2()
     {
         $btb = $this->createDB();
-        $q=[Q_AUTHOR=>'monperrus|ducasse'];
-        $results=$btb->multisearch($q);
+        $q = [Q_AUTHOR => 'monperrus|ducasse'];
+        $results = $btb->multisearch($q);
         $entry = $results[0];
-        $this->assertTrue(count($results) == 1);
-        $this->assertTrue($entry->getTitle() == 'A Book');
+        $this->assertCount(1, $results);
+        $this->assertSame($entry->getTitle(), 'A Book');
     }
 
-    public function test_config_value()
+    public function test_config_value(): void
     {
         // default value
         $this->assertFalse(config_value('BIBTEXBROWSER_NO_DEFAULT'));
@@ -164,15 +202,15 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function testInternationalization()
+    public function testInternationalization(): void
     {
         $btb = $this->createDB();
         global $BIBTEXBROWSER_LANG;
-        $BIBTEXBROWSER_LANG=[];
-        $BIBTEXBROWSER_LANG['Refereed Conference Papers']='foo';
+        $BIBTEXBROWSER_LANG = [];
+        $BIBTEXBROWSER_LANG['Refereed Conference Papers'] = 'foo';
         $this->assertEquals('foo', __('Refereed Conference Papers'));
 
-        $BIBTEXBROWSER_LANG['Books']='Livres';
+        $BIBTEXBROWSER_LANG['Books'] = 'Livres';
         $d = new AcademicDisplay();
         $d->setDB($btb);
         ob_start();
@@ -185,81 +223,82 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
     public function testNoSlashInKey()
     {
         $btb = $this->createDB();
-        $q=[Q_SEARCH=>'Slash'];
-        $results=$btb->multisearch($q);
-        $this->assertTrue(count($results) == 1);
+        $q = [Q_SEARCH => 'Slash'];
+        $results = $btb->multisearch($q);
+        $this->assertCount(1, $results);
         $entry = $results[0];
         $this->assertStringContainsString('aKey-withSlash', $entry->toHTML());
 
-        $q=[Q_KEY=>'aKey-withSlash'];
-        $results=$btb->multisearch($q);
+        $q = [Q_KEY => 'aKey-withSlash'];
+        $results = $btb->multisearch($q);
         $entry2 = $results[0];
         $this->assertSame($entry2, $entry);
     }
 
     public function test_string_should_be_deleted_after_update()
     {
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite(
             $test_data,
-            "@book{aKey,title={A Book},author={Martin Monperrus},publisher={Springer},year=2009}\n".
-    "@String{x=2008}\n"
+            "@book{aKey,title={A Book},author={Martin Monperrus},publisher={Springer},year=2009}\n" .
+            "@String{x=2008}\n"
         );
         fseek($test_data, 0);
         $btb = new BibDataBase();
         $btb->update_internal('inline', $test_data);
-//     print_r($btb->stringdb);
-        $this->assertEquals(1, count($btb->stringdb));
+        $this->assertCount(1, $btb->stringdb);
 
         // replacing the existing one
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite(
             $test_data,
-            "@book{aKey2,title={A Book},author={Martin Monperrus},publisher={Springer},year=2009}\n".
-    "@String{x=2009}\n"
+            "@book{aKey2,title={A Book},author={Martin Monperrus},publisher={Springer},year=2009}\n" .
+            "@String{x=2009}\n"
         );
         fseek($test_data, 0);
         $btb = new BibDataBase();
         $btb->update_internal('inline2', $test_data);
-//     print_r($btb->stringdb);
-        $this->assertEquals(1, count($btb->stringdb));
+        $this->assertCount(1, $btb->stringdb);
         $this->assertEquals('2009', $btb->stringdb['x']->value);//
 
         // now adding another one and removing the string
-        $test_data2 = fopen('php://memory', 'x+');
+        $test_data2 = fopen('php://memory', 'xb+');
         fwrite(
             $test_data2,
-            "@book{aKey,title={A Book},author={Martin Monperrus},publisher={Springer},year=2009}\n".
-    "@String{y=2010}\n"
+            "@book{aKey,title={A Book},author={Martin Monperrus},publisher={Springer},year=2009}\n" .
+            "@String{y=2010}\n"
         );
         fseek($test_data2, 0);
         $btb->update_internal('inline2', $test_data2);
-        $this->assertEquals(1, count($btb->stringdb));//
-    $this->assertEquals('2010', $btb->stringdb['y']->value);//
+        $this->assertCount(1, $btb->stringdb);//
+        $this->assertEquals('2010', $btb->stringdb['y']->value);//
     }
 
     public function test_mastersthesis()
     {
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite(
             $test_data,
-            "@mastersthesis{aKey,title={A Thing},author={Martin Monperrus},year=2009,school={School of Nowhere}}\n".
-    "@String{x=2008}\n"
+            "@mastersthesis{aKey,title={A Thing},author={Martin Monperrus},year=2009,school={School of Nowhere}}\n" .
+            "@String{x=2008}\n"
         );
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
-        $this->assertEquals("A Thing (Martin Monperrus), Master's thesis, School of Nowhere, 2009. [bibtex]", strip_tags($db->getEntryByKey('aKey')->toHTML()));
+        $this->assertEquals(
+            "A Thing (Martin Monperrus), Master's thesis, School of Nowhere, 2009. [bibtex]",
+            strip_tags($db->getEntryByKey('aKey')->toHTML())
+        );
     }
 
     public function test_google_scholar_metadata()
     {
         bibtexbrowser_configure('METADATA_GS', true);
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite(
             $test_data,
-            "@article{aKey,title={A Book},author={Martin Monperrus},publisher={Springer},year=2009,pages={42--4242},number=1}\n".
-    "@String{x=2008}\n"
+            "@article{aKey,title={A Book},author={Martin Monperrus},publisher={Springer},year=2009,pages={42--4242},number=1}\n" .
+            "@String{x=2008}\n"
         );
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -277,11 +316,11 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
 
     public function test_metadata_opengraph()
     {
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite(
             $test_data,
-            "@article{aKey,title={A Book},author={Martin Monperrus},url={http://foo.com/},publisher={Springer},year=2009,pages={42--4242},number=1}\n".
-    "@String{x=2008}\n"
+            "@article{aKey,title={A Book},author={Martin Monperrus},url={http://foo.com/},publisher={Springer},year=2009,pages={42--4242},number=1}\n" .
+            "@String{x=2008}\n"
         );
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -299,16 +338,16 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
 
     public function test_math_cal()
     {
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite(
             $test_data,
-            "@book{aKey,title={{A {Book} $\mbox{foo}$ tt $\boo{t}$}} ,author={Martin Monperrus},publisher={Springer},year=2009}\n".
-    "@String{x=2008}\n"
+            "@book{aKey,title={{A {Book} $\mbox{foo}$ tt $\boo{t}$}} ,author={Martin Monperrus},publisher={Springer},year=2009}\n" .
+            "@String{x=2008}\n"
         );
         fseek($test_data, 0);
         $btb = new BibDataBase();
         $btb->update_internal('inline', $test_data);
-        $first_entry=$btb->bibdb[array_keys($btb->bibdb)[0]];
+        $first_entry = $btb->bibdb[array_keys($btb->bibdb)[0]];
 //    $this->assertTrue(strpos('A Book{} $\mbox{foo}$',$first_entry->toHTML());
         $this->assertEquals('A Book $\mbox{foo}$ tt $\boo{t}$', $first_entry->getTitle());
     }
@@ -316,7 +355,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
     public function test_link_configuration()
     {
         bibtexbrowser_configure('BIBTEXBROWSER_LINKS_TARGET', '_self');
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite(
             $test_data,
             "@book{aKey,pdf={myarticle.pdf}}\n@book{bKey,url={myarticle.pdf}}\n@book{cKey,url={myarticle.xyz}}\n"
@@ -324,14 +363,17 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         fseek($test_data, 0);
         $btb = new BibDataBase();
         $btb->update_internal('inline', $test_data);
-        $first_entry=$btb->bibdb[array_keys($btb->bibdb)[0]];
+        $first_entry = $btb->bibdb[array_keys($btb->bibdb)[0]];
         $this->assertEquals('<a href="myarticle.pdf">[pdf]</a>', $first_entry->getLink('pdf'));
         $this->assertEquals('<a href="myarticle.pdf">[pdf]</a>', $first_entry->getPdfLink());
-        $this->assertEquals('<a href="myarticle.pdf"><img class="icon" src="pdficon.png" alt="[pdf]" title="pdf"/></a>', $first_entry->getLink('pdf', 'pdficon.png'));
+        $this->assertEquals(
+            '<a href="myarticle.pdf"><img class="icon" src="pdficon.png" alt="[pdf]" title="pdf"/></a>',
+            $first_entry->getLink('pdf', 'pdficon.png')
+        );
         $this->assertEquals('<a href="myarticle.pdf">[see]</a>', $first_entry->getLink('pdf', null, 'see'));
-        $second_entry=$btb->bibdb[array_keys($btb->bibdb)[1]];
+        $second_entry = $btb->bibdb[array_keys($btb->bibdb)[1]];
         $this->assertEquals('<a href="myarticle.pdf">[pdf]</a>', $second_entry->getPdfLink());
-        $third_entry=$btb->bibdb[array_keys($btb->bibdb)[2]];
+        $third_entry = $btb->bibdb[array_keys($btb->bibdb)[2]];
         $this->assertEquals('<a href="myarticle.xyz">[url]</a>', $third_entry->getPdfLink());
     }
 
@@ -339,7 +381,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
     public function test_zotero()
     {
         bibtexbrowser_configure('BIBTEXBROWSER_LINKS_TARGET', '_self');
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite(
             $test_data,
             "@book{aKey,file={myarticle.pdf}}\n"
@@ -347,7 +389,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         fseek($test_data, 0);
         $btb = new BibDataBase();
         $btb->update_internal('inline', $test_data);
-        $first_entry=$btb->bibdb[array_keys($btb->bibdb)[0]];
+        $first_entry = $btb->bibdb[array_keys($btb->bibdb)[0]];
         $this->assertEquals('<a href="myarticle.pdf">[pdf]</a>', $first_entry->getPdfLink());
     }
 
@@ -355,7 +397,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
     public function test_doi_url()
     {
         bibtexbrowser_configure('BIBTEXBROWSER_LINKS_TARGET', '_self');
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite(
             $test_data,
             '@Article{Baldwin2014Quantum,Doi={10.1103/PhysRevA.90.012110},Url={http://link.aps.org/doi/10.1103/PhysRevA.90.012110}}'
@@ -363,24 +405,36 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         fseek($test_data, 0);
         $btb = new BibDataBase();
         $btb->update_internal('inline', $test_data);
-        $first_entry=$btb->bibdb[array_keys($btb->bibdb)[0]];
-        $this->assertEquals('<pre class="purebibtex">@Article{Baldwin2014Quantum,Doi={<a href="https://doi.org/10.1103/PhysRevA.90.012110">10.1103/PhysRevA.90.012110</a>},Url={<a href="http://link.aps.org/doi/10.1103/PhysRevA.90.012110">http://link.aps.org/doi/10.1103/PhysRevA.90.012110</a>}}</pre>', $first_entry->toEntryUnformatted());
+        $first_entry = $btb->bibdb[array_keys($btb->bibdb)[0]];
+        $this->assertEquals(
+            '<pre class="purebibtex">@Article{Baldwin2014Quantum,Doi={<a href="https://doi.org/10.1103/PhysRevA.90.012110">10.1103/PhysRevA.90.012110</a>},Url={<a href="http://link.aps.org/doi/10.1103/PhysRevA.90.012110">http://link.aps.org/doi/10.1103/PhysRevA.90.012110</a>}}</pre>',
+            $first_entry->toEntryUnformatted()
+        );
     }
 
     public function test_filter_view()
     {
-        $test_data = fopen('php://memory', 'x+');
-        fwrite($test_data, "@article{aKey,title={A Book},author={Martin M\'e},publisher={Springer},year=2009,pages={42--4242},number=1}\n");
+        $test_data = fopen('php://memory', 'xb+');
+        fwrite(
+            $test_data,
+            "@article{aKey,title={A Book},author={Martin M\'e},publisher={Springer},year=2009,pages={42--4242},number=1}\n"
+        );
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
         $dis = $db->getEntryByKey('aKey');
-        $this->assertEquals("@article{aKey,title={A Book},author={Martin M\'e},publisher={Springer},year=2009,pages={42--4242},number=1}", $dis->getText());
+        $this->assertEquals(
+            "@article{aKey,title={A Book},author={Martin M\'e},publisher={Springer},year=2009,pages={42--4242},number=1}",
+            $dis->getText()
+        );
 
         // now ith option
         bibtexbrowser_configure('BIBTEXBROWSER_BIBTEX_VIEW', 'reconstructed');
         bibtexbrowser_configure('BIBTEXBROWSER_BIBTEX_VIEW_FILTEREDOUT', 'pages|number');
-        $this->assertEquals("@article{aKey,\n title = {A Book},\n author = {Martin M\'e},\n publisher = {Springer},\n year = {2009},\n}\n", $dis->getText());
+        $this->assertEquals(
+            "@article{aKey,\n title = {A Book},\n author = {Martin M\'e},\n publisher = {Springer},\n year = {2009},\n}\n",
+            $dis->getText()
+        );
     }
 
     public function test_BIBTEXBROWSER_USE_LATEX2HTML()
@@ -388,7 +442,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $bibtex = "@article{aKey,title={\`a Book},author={J\'e Lo},publisher={Springer},year=2009,pages={42--4242},number=1}\n";
 
         bibtexbrowser_configure('BIBTEXBROWSER_USE_LATEX2HTML', true);
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -401,7 +455,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('Lo, Jé', $dis->getArrayOfCommaSeparatedAuthors()[0]);
 
         bibtexbrowser_configure('BIBTEXBROWSER_USE_LATEX2HTML', false);
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -423,8 +477,8 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $d->setEntries($db->bibdb);
         ob_start();
         $d->display();
-        $content = '<div>'.ob_get_clean().'</div>';
-        $xml = new SimpleXMLElement($content);
+        $content = '<div>' . ob_get_clean() . '</div>';
+        $xml = new \SimpleXMLElement($content);
         $result = $xml->xpath('//td[@class=\'bibref\']');
         $this->assertEquals($PAGE_SIZE, count($result));
     }
@@ -434,7 +488,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $bibtex = "@article{aKey,title={\`a Book},keywords={foo,bar},author={Martin Monperrus},publisher={Springer},year=2009,pages={42--4242},number=1}\n";
 
         bibtexbrowser_configure('BIBTEXBROWSER_USE_LATEX2HTML', true);
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -463,7 +517,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
             pdf={magic2.pdf},
             url={magic3}
         }";
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -482,7 +536,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
     public function test_formatting()
     {
         $bibtex = "@article{aKey61,title={An article Book},author = {Meyer, Heribert  and   {Advanced Air and Ground Research Team} and Foo Bar}}\n@article{bKey61,title={An article Book},author = {Meyer, Heribert and Foo Bar}}\n";
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -495,7 +549,10 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('Meyer, Heribert', $authors[0]);
         $this->assertEquals('Advanced Air and Ground Research Team', $authors[1]);
         $this->assertEquals('Foo Bar', $authors[2]);
-        $this->assertEquals('Meyer, Heribert, Advanced Air and Ground Research Team and Foo Bar', $entry->getFormattedAuthorsString());
+        $this->assertEquals(
+            'Meyer, Heribert, Advanced Air and Ground Research Team and Foo Bar',
+            $entry->getFormattedAuthorsString()
+        );
 
         // test with formatting (first name before)
         bibtexbrowser_configure('USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT', true);
@@ -504,7 +561,10 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('Meyer, Heribert', $authors[0]);
         $this->assertEquals('Team, Advanced Air and Ground Research', $authors[1]);
         $this->assertEquals('Bar, Foo', $authors[2]);
-        $this->assertEquals('Meyer, Heribert; Team, Advanced Air and Ground Research and Bar, Foo', $entry->getFormattedAuthorsString());
+        $this->assertEquals(
+            'Meyer, Heribert; Team, Advanced Air and Ground Research and Bar, Foo',
+            $entry->getFormattedAuthorsString()
+        );
 
         // test with formatting (with initials) formatAuthorInitials
         bibtexbrowser_configure('USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT', false);
@@ -525,14 +585,20 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('Heribert Meyer', $authors[0]);
         $this->assertEquals('Advanced Air and Ground Research Team', $authors[1]);
         $this->assertEquals('Foo Bar', $authors[2]);
-        $this->assertEquals('Heribert Meyer, Advanced Air and Ground Research Team and Foo Bar', $entry->getFormattedAuthorsString());
+        $this->assertEquals(
+            'Heribert Meyer, Advanced Air and Ground Research Team and Foo Bar',
+            $entry->getFormattedAuthorsString()
+        );
 
         // test Oxford comma with default options
         bibtexbrowser_configure('USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT', false);
         bibtexbrowser_configure('USE_INITIALS_FOR_NAMES', false);
         bibtexbrowser_configure('USE_FIRST_THEN_LAST', false);
         bibtexbrowser_configure('USE_OXFORD_COMMA', true);
-        $this->assertEquals('Meyer, Heribert, Advanced Air and Ground Research Team, and Foo Bar', $entry->getFormattedAuthorsString());
+        $this->assertEquals(
+            'Meyer, Heribert, Advanced Air and Ground Research Team, and Foo Bar',
+            $entry->getFormattedAuthorsString()
+        );
         $entry = $db->getEntryByKey('bKey61');
         $this->assertEquals('Meyer, Heribert and Foo Bar', $entry->getFormattedAuthorsString());
         bibtexbrowser_configure('USE_OXFORD_COMMA', false);
@@ -547,7 +613,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
 
         // default case: one authors
         $bibtex = "@article{aKey61,title={An article Book},author = {Meyer, Heribert}}\n";
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -559,7 +625,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
 
         // default case: no sub list
         $bibtex = "@article{aKey61,title={An article Book},author = {Meyer, Heribert     and  Foo Bar}}\n";
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -573,7 +639,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         // Github issue 61
         $bibtex = "@article{aKey61,title={An article Book},author = {Meyer, Heribert  and   {Advanced Air and Ground Research Team} and Foo Bar and J{\'e} Ko and J{\'e} Le and Fd L{\'e}}}\n";
         // wrong parsing of author names
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -602,7 +668,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         bibtexbrowser_configure('USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT', false);
         bibtexbrowser_configure('USE_FIRST_THEN_LAST', false);
         $bibtex = "@string{hp_MartinMonperrus={http://www.monperrus.net/~martin},hp_FooAcé={http://example.net/}},@article{aKey61,title={An article Book},author = {Martin Monperrus and Foo Acé and Monperrus, Martin}}\n";
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -619,14 +685,17 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         bibtexbrowser_configure('USE_FIRST_THEN_LAST', true);
 
         $bibtex = "@string{hp_MartinMonperrus={http://www.monperrus.net/martin},hp_FooAcé={http://example.net/}},@article{aKey61,title={An article Book},author = {Martin Monperrus and Foo Ac\'e and Monperrus, Martin}}\n";
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
 
         $index = var_export($db->authorIndex(), true);
-        $this->assertEquals("array (\n  'Foo Acé' => 'Foo Acé',\n  'Martin Monperrus' => 'Martin Monperrus',\n)", $index);
+        $this->assertEquals(
+            "array (\n  'Foo Acé' => 'Foo Acé',\n  'Martin Monperrus' => 'Martin Monperrus',\n)",
+            $index
+        );
     }
 
     public function test_string_entries()
@@ -685,22 +754,22 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $d->display();
         $rep2 = ob_get_clean();
         // there is the same number of entries
-        $this->assertEquals($nref, count($btb2->bibdb));
+        $this->assertCount($nref, $btb2->bibdb);
         $this->assertEquals($bibtex, $btb2->toBibtex());
         $this->assertEquals($rep, $rep2);
     }
 
     public function test_cli()
     {
-        $test_file='test_cli.bib';
+        $test_file = 'test_cli.bib';
         copy('bibacid-utf8.bib', $test_file);
-        system('php bibtexbrowser-cli.php '.$test_file.' --id classical --set-title "a new title"');
+        system('php bibtexbrowser-cli.php ' . $test_file . ' --id classical --set-title "a new title"');
         $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
         $db->load($test_file);
         $this->assertEquals('a new title', $db->getEntryByKey('classical')->getField('title'));
 
         // multiple changes
-        system('php bibtexbrowser-cli.php '.$test_file.' --id classical --set-title "a new title" --id with_abstract --set-title "a new title" --set-year 1990');
+        system('php bibtexbrowser-cli.php ' . $test_file . ' --id classical --set-title "a new title" --id with_abstract --set-title "a new title" --set-year 1990');
         $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
         $db->load($test_file);
         $this->assertEquals('a new title', $db->getEntryByKey('classical')->getField('title'));
@@ -713,7 +782,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
     public function test_removeField()
     {
         $btb = $this->createDB();
-        $first_entry=$btb->getEntryByKey('aKey');
+        $first_entry = $btb->getEntryByKey('aKey');
         $this->assertTrue($first_entry->hasField('author'));
         $first_entry->removeField('author');
         $this->assertFalse($first_entry->hasField('author'));
@@ -729,7 +798,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         fseek($test_data, 0);
         $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
         $db->update_internal('inline', $test_data);
-        $entry=$db->getEntryByKey($key);
+        $entry = $db->getEntryByKey($key);
         $this->assertEquals($bibtex, $entry->getText());
     }
 
@@ -743,8 +812,11 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         fseek($test_data, 0);
         $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
         $db->update_internal('inline', $test_data);
-        $entry=$db->getEntryByKey('key');
-        $this->assertStringContainsString('<a href="https://scholar.google.com/scholar?cites=1234">[citations]</a>', $entry->toHTML());
+        $entry = $db->getEntryByKey('key');
+        $this->assertStringContainsString(
+            '<a href="https://scholar.google.com/scholar?cites=1234">[citations]</a>',
+            $entry->toHTML()
+        );
     }
 
 
@@ -763,15 +835,18 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         ob_start();
         NoWrapper($d);
         $output = ob_get_clean();
-        $res = eval('return '.file_get_contents('reference-output-wp-publications.txt').';');
-        $this->assertEquals(strip_tags($res['rendered']), "&#091;wp-publications bib=sample.bib all=1&#093; gives:\n".strip_tags($output)."\n");
+        $res = eval('return ' . file_get_contents('reference-output-wp-publications.txt') . ';');
+        $this->assertEquals(
+            strip_tags($res['rendered']),
+            "&#091;wp-publications bib=sample.bib all=1&#093; gives:\n" . strip_tags($output) . "\n"
+        );
     }
 
     public function test80()
     {
         // entries without year are at the top
         $bibtex = '@article{keyWithoutYear,title={First article},author = {Martin}},@article{key2,title={Second article},author = {Martin}, year=2007}';
-        $test_data = fopen('php://memory', 'x+');
+        $test_data = fopen('php://memory', 'xb+');
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new BibDataBase();
@@ -796,11 +871,17 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $btb->load('bibacid-utf8.bib');
         $this->assertEquals(4, count($btb->bibdb['arXiv-1807.05030']->getRawAuthors()));
         $this->assertEquals(4, count($btb->bibdb['arXiv-1807.05030']->getFormattedAuthorsArray()));
-        $this->assertEquals('Oscar Luis Vera-Pérez, Benjamin Danglot, Martin Monperrus and Benoit Baudry', $btb->bibdb['arXiv-1807.05030']->getAuthor());
+        $this->assertEquals(
+            'Oscar Luis Vera-Pérez, Benjamin Danglot, Martin Monperrus and Benoit Baudry',
+            $btb->bibdb['arXiv-1807.05030']->getAuthor()
+        );
 
         bibtexbrowser_configure('BIBTEXBROWSER_LINK_STYLE', 'nothing');
         bibtexbrowser_configure('BIBLIOGRAPHYSTYLE', 'JanosBibliographyStyle');
-        $this->assertEquals("Oscar Luis Vera-Pérez, Benjamin Danglot, Martin Monperrus and Benoit Baudry,  \"A Comprehensive Study of Pseudo-tested Methods\", Technical report, arXiv 1807.05030, 2018.\n ", strip_tags($btb->bibdb['arXiv-1807.05030']->toHTML()));
+        $this->assertEquals(
+            "Oscar Luis Vera-Pérez, Benjamin Danglot, Martin Monperrus and Benoit Baudry,  \"A Comprehensive Study of Pseudo-tested Methods\", Technical report, arXiv 1807.05030, 2018.\n ",
+            strip_tags($btb->bibdb['arXiv-1807.05030']->toHTML())
+        );
     }
 
 
@@ -820,7 +901,7 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $output = ob_get_clean();
 
         // assertion: we have two tables in the output
-        $xml = new SimpleXMLElement('<doc>'.$output.'</doc>');
+        $xml = new \SimpleXMLElement('<doc>' . $output . '</doc>');
         $result = $xml->xpath('//table');
         $this->assertEquals(2, count($result));
     }
@@ -830,21 +911,21 @@ class BibtexBrowsertest extends \PHPUnit\Framework\TestCase
         $btb = new BibDataBase();
         $btb->load('bibacid-utf8.bib');
         $entry = $btb->bibdb['arXiv-1807.05030'];
-        $expected = "cff-version: 1.2.0\n".
-        "# CITATION.cff created with https://github.com/monperrus/bibtexbrowser/\n".
-        "preferred-citation:\n".
-        "  title: \"A Comprehensive Study of Pseudo-tested Methods\"\n".
-        "  year: \"2018\"\n".
-        "  authors:\n".
-        "    - family-names: Vera-Pérez\n".
-        "      given-names: Oscar Luis\n".
-        "    - family-names: Danglot\n".
-        "      given-names: Benjamin\n".
-        "    - family-names: Monperrus\n".
-        "      given-names: Martin\n".
-        "    - family-names: Baudry\n".
-        "      given-names: Benoit\n";
+        $expected = "cff-version: 1.2.0\n" .
+            "# CITATION.cff created with https://github.com/monperrus/bibtexbrowser/\n" .
+            "preferred-citation:\n" .
+            "  title: \"A Comprehensive Study of Pseudo-tested Methods\"\n" .
+            "  year: \"2018\"\n" .
+            "  authors:\n" .
+            "    - family-names: Vera-Pérez\n" .
+            "      given-names: Oscar Luis\n" .
+            "    - family-names: Danglot\n" .
+            "      given-names: Benjamin\n" .
+            "    - family-names: Monperrus\n" .
+            "      given-names: Martin\n" .
+            "    - family-names: Baudry\n" .
+            "      given-names: Benoit\n";
 
         $this->assertEquals($expected, $entry->toCFF());
     }
-} // end class
+}

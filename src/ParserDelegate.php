@@ -37,7 +37,7 @@ class ParserDelegate
 
     /** called for each sub parts of type {part} of a field value
      * for now, only CURLYTOP and CURLYONE events
-    */
+     */
     public function entryValuePart($key, $value, $type)
     {
     }

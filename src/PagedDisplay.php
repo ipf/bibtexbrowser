@@ -1,17 +1,18 @@
 <?php
+
 namespace BibtexBrowser\BibtexBrowser;
 
 /** creates paged output, e.g: [[http://localhost/bibtexbrowser/testPagedDisplay.php?page=1]]
-usage:
-<pre>
-  $_GET['library']=1;
-  include( 'bibtexbrowser.php' );
-  $db = zetDB('bibacid-utf8.bib');
-  $pd = new PagedDisplay();
-  $pd->setEntries($db->bibdb);
-  $pd->display();
-</pre>
-*/
+ * usage:
+ * <pre>
+ * $_GET['library']=1;
+ * include( 'bibtexbrowser.php' );
+ * $db = zetDB('bibacid-utf8.bib');
+ * $pd = new PagedDisplay();
+ * $pd->setEntries($db->bibdb);
+ * $pd->display();
+ * </pre>
+ */
 class PagedDisplay
 {
     public array $entries;
@@ -49,21 +50,21 @@ class PagedDisplay
 
     public function getTitle()
     {
-        return query2title($this->query). ' - page '.$this->page;
+        return query2title($this->query) . ' - page ' . $this->page;
     }
 
     public function display()
     {
         $less = false;
 
-        if ($this->page>1) {
+        if ($this->page > 1) {
             $less = true;
         }
 
         $more = true;
 
         // computing $more
-        $index = ($this->page)*bibtexbrowser_configuration('PAGE_SIZE');
+        $index = ($this->page) * bibtexbrowser_configuration('PAGE_SIZE');
         if (!isset($this->entries[$index])) {
             $more = false;
         }
@@ -71,7 +72,7 @@ class PagedDisplay
         $this->menu($less, $more);
         print_header_layout();
         for ($i = 0; $i < bibtexbrowser_configuration('PAGE_SIZE'); $i++) {
-            $index = ($this->page-1)*bibtexbrowser_configuration('PAGE_SIZE') + $i;
+            $index = ($this->page - 1) * bibtexbrowser_configuration('PAGE_SIZE') + $i;
             if (isset($this->entries[$index])) {
                 $bib = $this->entries[$index];
                 echo $bib->toHTML(true);
@@ -90,9 +91,9 @@ class PagedDisplay
         echo '<span class="nav-menu">';
 
         $prev = $this->query;
-        $prev['page'] = $this->page-1;
+        $prev['page'] = $this->page - 1;
         if ($less == true) {
-            echo '<a '.makeHref($prev).'>Prev Page</a>';
+            echo '<a ' . makeHref($prev) . '>Prev Page</a>';
         }
 
         if ($less && $more) {
@@ -100,9 +101,9 @@ class PagedDisplay
         }
 
         $next = $this->query;
-        $next['page'] = $this->page+1;
+        $next['page'] = $this->page + 1;
         if ($more == true) {
-            echo '<a '.makeHref($next).'>Next Page</a>';
+            echo '<a ' . makeHref($next) . '>Next Page</a>';
         }
         echo '</span>';
     }

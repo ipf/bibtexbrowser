@@ -14,7 +14,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         __DIR__
     ]);
     $parameters->set(Option::SKIP, [
-        __DIR__.'/vendor'
+        __DIR__ . '/vendor'
     ]);
     $containerConfigurator->import(SetList::PHP_74);
 

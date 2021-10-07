@@ -5,23 +5,23 @@ declare(strict_types=1);
 namespace BibtexBrowser\BibtexBrowser;
 
 /** builds arrays of BibEntry objects from a bibtex file.
-usage:
-<pre>
-  $empty_array = array();
-  $db = new BibDBBuilder();
-  $db->build('bibacid-utf8.bib'); // parses bib file
-  print_r($db->builtdb);// an associated array key -> BibEntry objects
-  print_r($db->stringdb);// an associated array key -> strings representing @string
-</pre>
-notes:
- method build can be used several times, bibtex entries are accumulated in the builder
-*/
+ * usage:
+ * <pre>
+ * $empty_array = array();
+ * $db = new BibDBBuilder();
+ * $db->build('bibacid-utf8.bib'); // parses bib file
+ * print_r($db->builtdb);// an associated array key -> BibEntry objects
+ * print_r($db->stringdb);// an associated array key -> strings representing @string
+ * </pre>
+ * notes:
+ * method build can be used several times, bibtex entries are accumulated in the builder
+ */
 class BibDBBuilder extends ParserDelegate
 {
     private const DATA_DIR = '';
 
     /** A hashtable from keys to bib entries (BibEntry). */
-    public array $builtdb  = [];
+    public array $builtdb = [];
 
     /** A hashtable of constant strings */
     public array $stringdb = [];
@@ -34,11 +34,11 @@ class BibDBBuilder extends ParserDelegate
     {
         $this->filename = $bibfilename;
         if ($handle == null) {
-            $handle = fopen(self::DATA_DIR.$bibfilename, 'rb');
+            $handle = fopen(self::DATA_DIR . $bibfilename, 'rb');
         }
 
         if (!$handle) {
-            die('cannot open '.$bibfilename);
+            die('cannot open ' . $bibfilename);
         }
 
         $parser = new StateBasedBibtexParser($this);
@@ -78,27 +78,27 @@ class BibDBBuilder extends ParserDelegate
 
     public function setEntryField($fieldkey, $entryvalue)
     {
-        $fieldkey=trim($fieldkey);
+        $fieldkey = trim($fieldkey);
         // support for Bibtex concatenation
         // see http://newton.ex.ac.uk/tex/pack/bibtex/btxdoc/node3.html
         // (?<! is a negative look-behind assertion, see http://www.php.net/manual/en/regexp.reference.assertions.php
-        $entryvalue_array=preg_split('/(?<!\\\\)#/', $entryvalue);
-        foreach ($entryvalue_array as $k=>$v) {
+        $entryvalue_array = preg_split('/(?<!\\\\)#/', $entryvalue);
+        foreach ($entryvalue_array as $k => $v) {
             // spaces are allowed when using # and they are not taken into account
             // however # is not itself replaced by a space
             // warning: @strings are not case sensitive
             // see http://newton.ex.ac.uk/tex/pack/bibtex/btxdoc/node3.html
-            $stringKey=strtolower(trim($v));
+            $stringKey = strtolower(trim($v));
             if (isset($this->stringdb[$stringKey])) {
                 // this field will be formated later by xtrim and latex2html
-                $entryvalue_array[$k]=$this->stringdb[$stringKey]->value;
+                $entryvalue_array[$k] = $this->stringdb[$stringKey]->value;
 
                 // we keep a trace of this replacement
                 // so as to produce correct bibtex snippets
-                $this->currentEntry->constants[$stringKey]=$this->stringdb[$stringKey]->value;
+                $this->currentEntry->constants[$stringKey] = $this->stringdb[$stringKey]->value;
             }
         }
-        $entryvalue=implode('', $entryvalue_array);
+        $entryvalue = implode('', $entryvalue_array);
 
         $this->currentEntry->setField($fieldkey, $entryvalue);
     }
@@ -148,20 +148,16 @@ class BibDBBuilder extends ParserDelegate
         }
 
         // ignoring jabref comments
-        if (($this->currentEntry->getType()=='comment')) {
+        if (($this->currentEntry->getType() == 'comment')) {
             /* do nothing for jabref comments */
-        }
-
-        // we add it to the string database
-        elseif ($this->currentEntry->getType()=='string') {
+        } // we add it to the string database
+        elseif ($this->currentEntry->getType() == 'string') {
             foreach ($this->currentEntry->fields as $k => $v) {
                 if ($k != BibEntry::Q_INNER_TYPE) {
                     $this->stringdb[$k] = new StringEntry($k, $v, $this->filename);
                 }
             }
-        }
-
-        // we add it to the database
+        } // we add it to the database
         else {
             $this->builtdb[$this->currentEntry->getKey()] = $this->currentEntry;
         }

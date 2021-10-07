@@ -9,6 +9,6 @@ class NotFoundDisplay
 {
     public function display()
     {
-        echo '<span class="count">'.__('Sorry, no results for this query').'</span>';
+        echo '<span class="count">' . __('Sorry, no results for this query') . '</span>';
     }
 }

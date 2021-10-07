@@ -3,14 +3,14 @@
 namespace BibtexBrowser\BibtexBrowser;
 
 /** displays the summary information of all bib entries.
-usage:
-<pre>
-  $db = zetDB('bibacid-utf8.bib');
-  $d = new SimpleDisplay();
-  $d->setDB($db);
-  $d->display();
-</pre>
-  */
+ * usage:
+ * <pre>
+ * $db = zetDB('bibacid-utf8.bib');
+ * $d = new SimpleDisplay();
+ * $d->setDB($db);
+ * $d->display();
+ * </pre>
+ */
 class SimpleDisplay
 {
     public $query;
@@ -30,11 +30,12 @@ class SimpleDisplay
         $this->setEntries($db->multisearch($query));
     }
 
-    public function incHeadingLevel($by=1)
+    public function incHeadingLevel($by = 1)
     {
         $this->headingLevel += $by;
     }
-    public function decHeadingLevel($by=1)
+
+    public function decHeadingLevel($by = 1)
     {
         $this->headingLevel -= $by;
     }
@@ -47,7 +48,7 @@ class SimpleDisplay
     public function metadata()
     {
         if (BIBTEXBROWSER_ROBOTS_NOINDEX) {
-            return [['robots','noindex']];
+            return [['robots', 'noindex']];
         } else {
             return [];
         }
@@ -61,7 +62,7 @@ class SimpleDisplay
 
     public function indexUp()
     {
-        $index=1;
+        $index = 1;
         foreach ($this->entries as $bib) {
             $bib->setAbbrv((string)$index++);
         } // end foreach
@@ -75,7 +76,7 @@ class SimpleDisplay
 
     public function indexDown()
     {
-        $index=count($this->entries);
+        $index = count($this->entries);
         foreach ($this->entries as $bib) {
             $bib->setAbbrv((string)$index--);
         } // end foreach
@@ -86,6 +87,7 @@ class SimpleDisplay
     {
         $this->query = $query;
     }
+
     public function getTitle()
     {
         return _DefaultBibliographyTitle($this->query);
@@ -98,11 +100,11 @@ class SimpleDisplay
 
     public function setIndicesInIncreasingOrderChangingEveryYear()
     {
-        $i=1;
+        $i = 1;
         $pred = null;
         foreach ($this->entries as $bib) {
             if ($this->changeSection($pred, $bib)) {
-                $i=1;
+                $i = 1;
             }
             $bib->setIndex($i++);
             $pred = $bib;
@@ -112,11 +114,11 @@ class SimpleDisplay
     public function setIndicesInDecreasingOrder()
     {
         $count = count($this->entries);
-        $i=0;
+        $i = 0;
         foreach ($this->entries as $bib) {
             // by default, index are in decreasing order
             // so that when you add a publicaton recent , the indices of preceding publications don't change
-            $bib->setIndex($count-($i++));
+            $bib->setIndex($count - ($i++));
         } // end foreach
     }
 
@@ -130,16 +132,16 @@ class SimpleDisplay
         $this->setIndices();
 
         if ($this->options) {
-            foreach ($this->options as $fname=>$opt) {
+            foreach ($this->options as $fname => $opt) {
                 $this->$fname($opt, $entries);
             }
         }
 
         if (BIBTEXBROWSER_DEBUG) {
-            echo 'Style: '.bibtexbrowser_configuration('BIBLIOGRAPHYSTYLE').'<br/>';
-            echo 'Order: '.ORDER_FUNCTION.'<br/>';
-            echo 'Abbrv: '.c('ABBRV_TYPE').'<br/>';
-            echo 'Options: '.@implode(',', $this->options).'<br/>';
+            echo 'Style: ' . bibtexbrowser_configuration('BIBLIOGRAPHYSTYLE') . '<br/>';
+            echo 'Order: ' . ORDER_FUNCTION . '<br/>';
+            echo 'Abbrv: ' . c('ABBRV_TYPE') . '<br/>';
+            echo 'Options: ' . @implode(',', $this->options) . '<br/>';
         }
 
 //     if ($this->headingLevel == BIBTEXBROWSER_HTMLHEADINGLEVEL) {
@@ -170,7 +172,7 @@ class SimpleDisplay
     public function changeSection($pred, $bib)
     {
 
-    // for the first one we output the header
+        // for the first one we output the header
         if ($pred == null) {
             return true;
         }
@@ -182,22 +184,22 @@ class SimpleDisplay
     public function sectionHeader($bib, $pred)
     {
         switch (BIBTEXBROWSER_LAYOUT) {
-      case 'table':
-        return '<tr><td colspan="2" class="'.$this->headerCSS.'">'.$bib->getYear().'</td></tr>'."\n";
-        break;
-      case 'definition':
-        return '<div class="'.$this->headerCSS.'">'.$bib->getYear().'</div>'."\n";
-        break;
-      case 'list':
-          $string = '';
-        if ($pred) {
-            $string .= "</ul>\n";
+            case 'table':
+                return '<tr><td colspan="2" class="' . $this->headerCSS . '">' . $bib->getYear() . '</td></tr>' . "\n";
+                break;
+            case 'definition':
+                return '<div class="' . $this->headerCSS . '">' . $bib->getYear() . '</div>' . "\n";
+                break;
+            case 'list':
+                $string = '';
+                if ($pred) {
+                    $string .= "</ul>\n";
+                }
+                $year = $bib->hasField(YEAR) ? $bib->getYear() : __('No date');
+                return $string . '<h' . $this->headingLevel . '>' . $year . '</h' . $this->headingLevel . ">\n<ul class=\"result\">\n";
+                break;
+            default:
+                return '';
         }
-    $year = $bib->hasField(YEAR) ? $bib->getYear() : __('No date');
-        return $string.'<h'.$this->headingLevel.'>'.$year.'</h'.$this->headingLevel.">\n<ul class=\"result\">\n";
-        break;
-      default:
-        return '';
-    }
     }
 }

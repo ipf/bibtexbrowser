@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace BibtexBrowser\BibtexBrowser;
 
 /** is a possible delegate for StateBasedBibParser.
-usage:
-see snippet of [[#StateBasedBibParser]]
-*/
+ * usage:
+ * see snippet of [[#StateBasedBibParser]]
+ */
 class XmlPrettyPrinter extends ParserDelegate
 {
     public function beginFile()
     {
         header('Content-type: text/xml;');
-        print '<?xml version="1.0" encoding="'.OUTPUT_ENCODING.'"?>';
+        print '<?xml version="1.0" encoding="' . OUTPUT_ENCODING . '"?>';
         print '<bibfile>';
     }
 
@@ -22,19 +22,20 @@ class XmlPrettyPrinter extends ParserDelegate
     {
         print '</bibfile>';
     }
+
     public function setEntryField($finalkey, $entryvalue)
     {
-        print "<data>\n<key>".$finalkey."</key>\n<value>".$entryvalue."</value>\n</data>\n";
+        print "<data>\n<key>" . $finalkey . "</key>\n<value>" . $entryvalue . "</value>\n</data>\n";
     }
 
     public function setEntryType($entrytype)
     {
-        print '<type>'.$entrytype.'</type>';
+        print '<type>' . $entrytype . '</type>';
     }
 
     public function setEntryKey($entrykey)
     {
-        print '<keyonly>'.$entrykey.'</keyonly>';
+        print '<keyonly>' . $entrykey . '</keyonly>';
     }
 
     public function beginEntry()

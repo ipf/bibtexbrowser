@@ -24,6 +24,7 @@ class GakoParser
      * @var mixed[]|mixed
      */
     public $delegate;
+
     /** is the PHP5 constructor. */
     public function __construct()
     {

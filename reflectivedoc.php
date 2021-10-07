@@ -129,9 +129,7 @@ function create_wiki_parser()
 
         // Dec 30 2012
         ->addDelimX('bib', '\bib{', '}')
-        ->addDelimX('cite', '\cite{', '}')
-
-        ;
+        ->addDelimX('cite', '\cite{', '}');
 } // end create_wiki_parser
 
 function gakowiki__doc()
@@ -286,4 +284,5 @@ function getAllSnippetsInFile($file)
     }
     return $res;
 }
+
 ?>

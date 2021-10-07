@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace BibtexBrowser\BibtexBrowser;
 
 /** is used to create an RSS feed.
-usage:
-<pre>
-  $db = zetDB('bibacid-utf8.bib');
-  $query = array('year'=>2005);
-  $rss = new RSSDisplay();
-  $entries = $db->getLatestEntries(10);
-  $rss->setEntries($entries);
-  $rss->display();
-</pre>
-*/
+ * usage:
+ * <pre>
+ * $db = zetDB('bibacid-utf8.bib');
+ * $query = array('year'=>2005);
+ * $rss = new RSSDisplay();
+ * $entries = $db->getLatestEntries(10);
+ * $rss->setEntries($entries);
+ * $rss->display();
+ * </pre>
+ */
 class RSSDisplay
 {
     public $entries;
@@ -32,8 +32,8 @@ class RSSDisplay
     }
 
     /** tries to always output a valid XML/RSS string
-      * based on OUTPUT_ENCODING, HTML tags, and the transformations
-      * that happened in latex2html */
+     * based on OUTPUT_ENCODING, HTML tags, and the transformations
+     * that happened in latex2html */
     public function text2rss($desc)
     {
         // first strip HTML tags
@@ -73,35 +73,37 @@ class RSSDisplay
     public function display()
     {
         header('Content-type: application/rss+xml');
-        echo '<?xml version="1.0" encoding="'.OUTPUT_ENCODING.'"?>';
+        echo '<?xml version="1.0" encoding="' . OUTPUT_ENCODING . '"?>';
 //?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-<channel>
-  <title><?php echo $this->title; ?></title>
-  <link>http://<?php echo @$_SERVER['HTTP_HOST'].htmlentities(@$_SERVER['REQUEST_URI']); ?></link>
-  <atom:link href="http://<?php echo @$_SERVER['HTTP_HOST'].htmlentities(@$_SERVER['REQUEST_URI']); ?>" rel="self" type="application/rss+xml" />
-  <description></description>
-  <generator>bibtexbrowser v__GITHUB__</generator>
+        <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+            <channel>
+                <title><?php echo $this->title; ?></title>
+                <link>
+                http://<?php echo @$_SERVER['HTTP_HOST'] . htmlentities(@$_SERVER['REQUEST_URI']); ?></link>
+                <atom:link href="http://<?php echo @$_SERVER['HTTP_HOST'] . htmlentities(@$_SERVER['REQUEST_URI']); ?>"
+                           rel="self" type="application/rss+xml"/>
+                <description></description>
+                <generator>bibtexbrowser v__GITHUB__</generator>
 
-<?php
-  foreach ($this->entries as $bibentry) {
-      ?>
-     <item>
-     <title><?php echo $this->text2rss($bibentry->getTitle()); ?></title>
-     <link><?php echo $bibentry->getURL(); ?></link>
-     <description>
-      <?php
-        // we are in XML, so we cannot have HTML entitites
-        echo $this->text2rss(bib2html($bibentry)."\n".$bibentry->getAbstract()); ?>
-      </description>
-     <guid isPermaLink="false"><?php echo urlencode(@$_GET[Q_FILE].'::'.$bibentry->getKey()); ?></guid>
-     </item>
-     <?php
-  } /* end foreach */?>
-</channel>
-</rss>
+                <?php
+                foreach ($this->entries as $bibentry) {
+                    ?>
+                    <item>
+                        <title><?php echo $this->text2rss($bibentry->getTitle()); ?></title>
+                        <link><?php echo $bibentry->getURL(); ?></link>
+                        <description>
+                            <?php
+                            // we are in XML, so we cannot have HTML entitites
+                            echo $this->text2rss(bib2html($bibentry) . "\n" . $bibentry->getAbstract()); ?>
+                        </description>
+                        <guid isPermaLink="false"><?php echo urlencode(@$_GET[Q_FILE] . '::' . $bibentry->getKey()); ?></guid>
+                    </item>
+                    <?php
+                } /* end foreach */ ?>
+            </channel>
+        </rss>
 
-<?php
+        <?php
 //exit;
     }
 }

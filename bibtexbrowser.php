@@ -270,7 +270,7 @@ if (!defined('BIBTEXBROWSER')) {
     // *************** END CONFIGURATION
 
     define('Q_INNER_AUTHOR', '_author');// internally used for representing the author
-    @define('Q_INNER_KEYS_INDEX', '_keys-index');// used for storing indices in $_GET[Q_KEYS] array
+@define('Q_INNER_KEYS_INDEX', '_keys-index');// used for storing indices in $_GET[Q_KEYS] array
 
 // for clean search engine links
     // we disable url rewriting
@@ -1504,6 +1504,7 @@ if (!defined('BIBTEXBROWSER')) {
 
 
 
+
             </script>
             <script src="<?php echo MATHJAX_URI ?>"></script>
             <?php
@@ -1771,7 +1772,7 @@ if (!defined('BIBTEXBROWSER')) {
         } ?>
             </body>
             </html>
-<?php
+            <?php
     }
 
 
@@ -1813,8 +1814,8 @@ if (!defined('BIBTEXBROWSER')) {
     }
 }
 
-@include(preg_replace('/\.php$/', '.after.php', __FILE__));
-$class = BIBTEXBROWSER_MAIN;// extension point
-$main = new $class();
-$main->main();
-?>
+        @include(preg_replace('/\.php$/', '.after.php', __FILE__));
+        $class = BIBTEXBROWSER_MAIN;// extension point
+        $main = new $class();
+        $main->main();
+        ?>

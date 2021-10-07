@@ -8,7 +8,7 @@ class RawBibEntry extends BibEntry
 {
     public function setField($name, $value)
     {
-        $this->fields[$name]=$value;
-        $this->raw_fields[$name]=$value;
+        $this->fields[$name] = $value;
+        $this->raw_fields[$name] = $value;
     }
 }
