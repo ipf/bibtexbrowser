@@ -1,19 +1,38 @@
 {
-    "name": "monperrus/bibtexbrowser",
-    "description": "bibtexbrowser is a PHP script that creates publication lists from Bibtex files. bibtexbrowser is stable, mature and easy to install.",
-    "homepage": "http://www.monperrus.net/martin/bibtexbrowser/",
-    "license": "GPL-2.0+",
-    "authors": [
-	{
-	    "name": "Martin Monperrus",
-	    "homepage": "http://www.monperrus.net/martin/",
-	    "role": "Original Developer"
-	}
-    ],
-    "require": {
-	"php": ">=5.6"
-    },
-    "scripts": {
-        "serve": ["@php -S localhost:29896 ./tests/router.php"]
+  "name": "monperrus/bibtexbrowser",
+  "description": "bibtexbrowser is a PHP script that creates publication lists from Bibtex files. bibtexbrowser is stable, mature and easy to install.",
+  "homepage": "http://www.monperrus.net/martin/bibtexbrowser/",
+  "license": "GPL-2.0+",
+  "authors": [
+    {
+      "name": "Martin Monperrus",
+      "homepage": "http://www.monperrus.net/martin/",
+      "role": "Original Developer"
     }
+  ],
+  "require": {
+    "php": ">=7.4",
+    "ext-simplexml": "*",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "BibtexBrowser\\BibtexBrowser\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "BibtexBrowser\\BibtexBrowser\\tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "serve": [
+      "@php -S localhost:29896 ./tests/router.php"
+    ]
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.0",
+    "rector/rector": "^0.11",
+    "phpunit/phpunit": "^9.5"
+  }
 }
