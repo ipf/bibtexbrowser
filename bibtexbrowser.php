@@ -78,7 +78,7 @@ if (!defined('BIBTEXBROWSER')) {
     @define(
         'BIBTEX_INPUT_ENCODING',
         'UTF-8'
-    );//@define('BIBTEX_INPUT_ENCODING','iso-8859-1');//define('BIBTEX_INPUT_ENCODING','windows-1252');
+    );
     // the encoding of the HTML output
     @define('OUTPUT_ENCODING', 'UTF-8');
 
@@ -96,11 +96,14 @@ if (!defined('BIBTEXBROWSER')) {
     // if you don't like it, you can be disable it by adding in bibtexbrowser.local.php
     // @define('BIBTEXBROWSER_USE_PROGRESSIVE_ENHANCEMENT',false);
     @define('BIBTEXBROWSER_USE_PROGRESSIVE_ENHANCEMENT', true);
-    @define('BIBLIOGRAPHYSTYLE', 'DefaultBibliographyStyle');// this is the name of a function
-@define('BIBLIOGRAPHYSECTIONS', 'DefaultBibliographySections');// this is the name of a function
-@define('BIBLIOGRAPHYTITLE', 'DefaultBibliographyTitle');// this is the name of a function
+    // this is the name of a function
+    @define('BIBLIOGRAPHYSTYLE', 'DefaultBibliographyStyle');
+    // this is the name of a function
+    @define('BIBLIOGRAPHYSECTIONS', 'DefaultBibliographySections');
+    // this is the name of a function
+    @define('BIBLIOGRAPHYTITLE', 'DefaultBibliographyTitle');
 
-// shall we load MathJax to render math in $…$ in HTML?
+    // shall we load MathJax to render math in $…$ in HTML?
     @define('BIBTEXBROWSER_RENDER_MATH', true);
     @define('MATHJAX_URI', '//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/config/TeX-AMS_HTML.js?V=2.7.1');
 
@@ -117,20 +120,23 @@ if (!defined('BIBTEXBROWSER')) {
     @define('BIBTEXBROWSER_DEFAULT_TEMPLATE', TemplateUtility::class.'::HTMLTemplate');
 
     // the target frame of menu links
+    // might be define('BIBTEXBROWSER_MENU_TARGET','_self'); in bibtexbrowser.local.php
     @define(
         'BIBTEXBROWSER_MENU_TARGET',
         'main'
-    ); // might be define('BIBTEXBROWSER_MENU_TARGET','_self'); in bibtexbrowser.local.php
+    );
 
-    @define('ABBRV_TYPE', 'index');// may be year/x-abbrv/key/none/index/keys-index
+    // may be year/x-abbrv/key/none/index/keys-index
+    @define('ABBRV_TYPE', 'index');
 
     // are robots allowed to crawl and index bibtexbrowser generated pages?
     @define('BIBTEXBROWSER_ROBOTS_NOINDEX', false);
 
     //the default view in the "main" (right hand side) frame
-@define('BIBTEXBROWSER_DEFAULT_FRAME', 'year=latest'); // year=latest,all and all valid bibtexbrowser queries
+    // year=latest,all and all valid bibtexbrowser queries
+    @define('BIBTEXBROWSER_DEFAULT_FRAME', 'year=latest');
 
-// Wrapper to use when we are included by another script
+    // Wrapper to use when we are included by another script
     @define('BIBTEXBROWSER_EMBEDDED_WRAPPER', 'NoWrapper');
 
     // Main class to use
@@ -149,9 +155,10 @@ if (!defined('BIBTEXBROWSER')) {
     @define('BIBTEXBROWSER_NO_DEFAULT', false);
 
     // BIBTEXBROWSER_LINK_STYLE defines which function to use to display the links of a bibtex entry
-@define('BIBTEXBROWSER_LINK_STYLE', 'bib2links_default'); // can be 'nothing' (a function that does nothing)
+    // can be 'nothing' (a function that does nothing)
+    @define('BIBTEXBROWSER_LINK_STYLE', 'bib2links_default');
 
-// do we add [bibtex] links ?
+    // do we add [bibtex] links ?
     @define('BIBTEXBROWSER_BIBTEX_LINKS', true);
     // do we add [pdf] links ?
     // if the file extention is not .pdf, the field name (pdf, url, or file) is used instead
@@ -162,9 +169,10 @@ if (!defined('BIBTEXBROWSER')) {
     @define('BIBTEXBROWSER_GSID_LINKS', true);
 
     // should pdf, doi, url, gsid links be opened in a new window?
-@define('BIBTEXBROWSER_LINKS_TARGET', '_self');// can be _blank (new window), _top (with frames)
+    // can be _blank (new window), _top (with frames)
+    @define('BIBTEXBROWSER_LINKS_TARGET', '_self');
 
-// should authors be linked to [none/homepage/resultpage]
+    // should authors be linked to [none/homepage/resultpage]
     // none: nothing
     // their homepage if defined as @strings
     // their publication lists according to this bibtex
@@ -194,28 +202,39 @@ if (!defined('BIBTEXBROWSER')) {
     @define('BIBTEXBROWSER_DEBUG', false);
 
     // how to print authors names?
-// default => as in the bibtex file
-// USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT = true => "Meyer, Herbert"
-// USE_INITIALS_FOR_NAMES = true => "Meyer H"
-// USE_FIRST_THEN_LAST => Herbert Meyer
-@define('USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT', false);// output authors in a comma separated form, e.g. "Meyer, H"?
-@define('USE_INITIALS_FOR_NAMES', false); // use only initials for all first names?
-@define('USE_FIRST_THEN_LAST', false); // put first names before last names?
-@define(
-    'FORCE_NAMELIST_SEPARATOR',
-    ''
-); // if non-empty, use this to separate multiple names regardless of USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT
+    // default => as in the bibtex file
+    // USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT = true => "Meyer, Herbert"
+    // USE_INITIALS_FOR_NAMES = true => "Meyer H"
+    // USE_FIRST_THEN_LAST => Herbert Meyer
+    // output authors in a comma separated form, e.g. "Meyer, H"?
+    @define('USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT', false);
+    // use only initials for all first names?
+    @define('USE_INITIALS_FOR_NAMES', false);
+    // put first names before last names?
+    @define('USE_FIRST_THEN_LAST', false);
+    // if non-empty, use this to separate multiple names regardless of USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT
+    @define(
+        'FORCE_NAMELIST_SEPARATOR',
+        ''
+    );
     @define('LAST_AUTHOR_SEPARATOR', ' and ');
+
+    // adds an additional separator in addition to LAST_AUTHOR_SEPARATOR if there are more than two authors
     @define(
         'USE_OXFORD_COMMA',
         false
-    ); // adds an additional separator in addition to LAST_AUTHOR_SEPARATOR if there are more than two authors
+    );
 
-    @define('TYPES_SIZE', 10); // number of entry types per table
-@define('YEAR_SIZE', 20); // number of years per table
-@define('AUTHORS_SIZE', 30); // number of authors per table
-@define('TAGS_SIZE', 30); // number of keywords per table
-@define('READLINE_LIMIT', 1024);
+    // number of entry types per table
+    @define('TYPES_SIZE', 10);
+
+    // number of years per table
+    @define('YEAR_SIZE', 20);
+    // number of authors per table
+    @define('AUTHORS_SIZE', 30);
+    // number of keywords per table
+    @define('TAGS_SIZE', 30);
+    @define('READLINE_LIMIT', 1024);
     @define('Q_YEAR', 'year');
     @define('Q_YEAR_PAGE', 'year_page');
     @define('Q_YEAR_INPRESS', 'in press');
@@ -246,16 +265,21 @@ if (!defined('BIBTEXBROWSER')) {
     @define('BOOKTITLE', 'booktitle');
     @define('YEAR', 'year');
     @define('MULTIPLE_BIB_SEPARATOR', ';');
-    @define('METADATA_COINS', true); // see https://en.wikipedia.org/wiki/COinS
+    // see https://en.wikipedia.org/wiki/COinS
+    @define('METADATA_COINS', true);
+    // metadata google scholar, see https://www.monperrus.net/martin/accurate+bibliographic+metadata+and+google+scholar
     @define(
         'METADATA_GS',
         false
-    ); // metadata google scholar, see http://www.monperrus.net/martin/accurate+bibliographic+metadata+and+google+scholar
-@define('METADATA_DC', true); // see http://dublincore.org/
-@define('METADATA_OPENGRAPH', true);  // see http://ogp.me/
-@define('METADATA_EPRINTS', false); // see https://wiki.eprints.org/w/Category:EPrints_Metadata_Fields
+    );
+    // see https://dublincore.org/
+    @define('METADATA_DC', true);
+    // see https://ogp.me/
+    @define('METADATA_OPENGRAPH', true);
+    // see https://wiki.eprints.org/w/Category:EPrints_Metadata_Fields
+    @define('METADATA_EPRINTS', false);
 
-// define sort order for special values in 'year' field
+    // define sort order for special values in 'year' field
     // highest number is sorted first
     // don't exceed 0 though, since the values are added to PHP_INT_MAX
     @define('ORDER_YEAR_INPRESS', -0);
@@ -279,10 +303,12 @@ if (!defined('BIBTEXBROWSER')) {
 
     // *************** END CONFIGURATION
 
-    define('Q_INNER_AUTHOR', '_author');// internally used for representing the author
-@define('Q_INNER_KEYS_INDEX', '_keys-index');// used for storing indices in $_GET[Q_KEYS] array
+    // internally used for representing the author
+    define('Q_INNER_AUTHOR', '_author');
+    // used for storing indices in $_GET[Q_KEYS] array
+    @define('Q_INNER_KEYS_INDEX', '_keys-index');
 
-// for clean search engine links
+    // for clean search engine links
     // we disable url rewriting
     // ... and hope that your php configuration will accept one of these
     @ini_set('session.use_only_cookies', 1);

@@ -6,12 +6,14 @@
 // Usage
 // $ php bibtex-to-cff.php test_cli.bib --id classical
 //     -> this creates a file CITATION.cff for @xx{classical,
+use BibtexBrowser\BibtexBrowser\BibDataBase;
+
 require(__DIR__ . '/vendor/autoload.php');
 $_GET['library'] = 1;
 
 function bibtexbrowser_cff($arguments)
 {
-    $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
+    $db = new BibDataBase();
     $db->load($arguments[1]);
 
     $current_entry = null;
@@ -20,6 +22,7 @@ function bibtexbrowser_cff($arguments)
     for ($i = 2; $i < $argumentsCount; ++$i) {
         $arg = $arguments[$i];
         if ($arg === '--id') {
+            /** @var \BibtexBrowser\BibtexBrowser\BibEntry $current_entry */
             $current_entry = $db->getEntryByKey($arguments[$i + 1]);
         }
     }
