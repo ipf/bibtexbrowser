@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
+
 /** is used for creating menus (by type, by year, by author, etc.).
  * usage:
  * <pre>
@@ -17,12 +19,16 @@ namespace BibtexBrowser\BibtexBrowser;
 class MenuManager
 {
     public $display;
+
     /** The bibliographic database, an instance of class BibDataBase. */
     public $db;
 
     public $type_size = TYPES_SIZE;
+
     public $year_size = YEAR_SIZE;
+
     public $author_size = AUTHORS_SIZE;
+
     public $tag_size = TAGS_SIZE;
 
     public function __construct()
@@ -88,6 +94,7 @@ class MenuManager
         foreach ($this->db->getTypes() as $type) {
             $types[$type] = $type;
         }
+
         $types['.*'] = 'all types';
         // retreive or calculate page number to display
         $page = isset($_GET[Q_TYPE_PAGE]) ? (int) $_GET[Q_TYPE_PAGE] : 1;
@@ -264,11 +271,12 @@ class MenuManager
         $index = 0;
         foreach ($items as $key => $item) {
             if ($index >= $startIndex && $index < $endIndex) {
-                $href = $queryKey === 'year' ? makeHref([$queryKey => __($item)]) : makeHref([$queryKey => $key]);
+                $href = $queryKey === 'year' ? makeHref([$queryKey => InternationalizationUtility::translate($item)]) : makeHref([$queryKey => $key]);
                 echo '<a ' . $href . ' target="' . BIBTEXBROWSER_MENU_TARGET . '">' . $item . "</a>\n";
                 echo "<div class=\"mini_se\"></div>\n";
             }
-            $index++;
+
+            ++$index;
         }
     }
 }

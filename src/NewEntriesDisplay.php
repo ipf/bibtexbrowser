@@ -17,6 +17,7 @@ namespace BibtexBrowser\BibtexBrowser;
 class NewEntriesDisplay
 {
     public int $n = 5;
+
     public $db;
 
     public function setDB($bibdatabase)

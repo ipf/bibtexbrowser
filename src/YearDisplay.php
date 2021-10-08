@@ -16,8 +16,9 @@ namespace BibtexBrowser\BibtexBrowser;
 class YearDisplay
 {
     public $entries;
+
     /** is an array of strings representing years */
-    public $yearIndex;
+    public ?array $yearIndex = null;
 
     public function setDB($bibdatabase)
     {
@@ -48,6 +49,7 @@ class YearDisplay
     {
         $delegate = new SimpleDisplay();
         $delegate->setEntries($this->entries);
+
         $index = count($this->entries);
         foreach ($this->yearIndex as $year) {
             $x = [];

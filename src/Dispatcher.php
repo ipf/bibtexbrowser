@@ -47,6 +47,7 @@ class Dispatcher
             list($db, $parsed, $updated, $saved) = _zetDB($_GET[Q_FILE]);
             $this->db = $db;
         }
+
         return $this->db;
     }
 
@@ -62,7 +63,7 @@ class Dispatcher
         }
 
         if (!isset($_GET[Q_FILE])) {
-            die('$_GET[\'' . Q_FILE . '\'] is not set!');
+            die('$_GET[\'' . Q_FILE . "'] is not set!");
         }
 
         // is the publication list included in another page?
@@ -106,7 +107,9 @@ class Dispatcher
             if ($this->displayer == '') {
                 $this->displayer = bibtexbrowser_configuration('BIBTEXBROWSER_DEFAULT_DISPLAY');
             }
-        } // otherwise the query is left empty
+        }
+
+        // otherwise the query is left empty
 
         // do we have a displayer?
         if ($this->displayer != '') {
@@ -114,17 +117,21 @@ class Dispatcher
             if (isset($_GET['dopt'])) {
                 $options = json_decode($_GET['dopt'], true);
             }
+
             // required for PHP4 to have this intermediate variable
             $x = new $this->displayer();
             if (method_exists($x, 'setEntries')) {
                 $x->setEntries($selectedEntries);
             }
+
             if (method_exists($x, 'setTitle')) {
                 $x->setTitle(query2title($this->query));
             }
+
             if (method_exists($x, 'setQuery')) {
                 $x->setQuery($this->query);
             }
+
             // should call method display() on $x
             $fun = $this->wrapper;
             $fun($x);
@@ -181,9 +188,10 @@ class Dispatcher
 
     public function search()
     {
-        if (preg_match('/utf-?8/i', OUTPUT_ENCODING)) {
+        if (preg_match('#utf-?8#i', OUTPUT_ENCODING)) {
             $_GET[Q_SEARCH] = urldecode($_GET[Q_SEARCH]);
         }
+
         $this->query[Q_SEARCH] = $_GET[Q_SEARCH];
     }
 
@@ -199,6 +207,7 @@ class Dispatcher
             $years = $this->getDB()->yearIndex();
             $_GET[Q_YEAR] = array_shift($years);
         }
+
         $this->query[Q_YEAR] = $_GET[Q_YEAR];
     }
 
@@ -245,7 +254,7 @@ class Dispatcher
 
         foreach ($ranges as $range) {
             $range = trim($range);
-            preg_match('/(\d*)([^0-9]*)(\d*)/', $range, $matches);
+            preg_match('#(\d*)([^0-9]*)(\d*)#', $range, $matches);
             array_shift($matches);
 
             // If the number is empty, leave it empty - dont put it to 0
@@ -276,6 +285,7 @@ class Dispatcher
 
             $result[] = [$lower, $upper];
         }
+
         $this->query[Q_RANGE] = $result;
     }
 
@@ -283,6 +293,7 @@ class Dispatcher
     {
         $menu = new MenuManager();
         $menu->setDB($this->getDB());
+
         $fun = $this->wrapper;
         $fun($menu);
         return 'END_DISPATCH';
@@ -325,11 +336,12 @@ class Dispatcher
                 $fun = $this->wrapper;
                 $fun($bibdisplay);
             }
+
             return 'END_DISPATCH';
         }
 
         // case two: multiple keys
-        if (preg_match('/[|,]/', $_GET[Q_KEY])) {
+        if (preg_match('#[|,]#', $_GET[Q_KEY])) {
             $this->query[Q_SEARCH] = str_replace(',', '|', $_GET[Q_KEY]);
         } else {
             nonExistentBibEntryError();
@@ -342,6 +354,7 @@ class Dispatcher
         if (get_magic_quotes_gpc()) {
             $_GET[Q_KEYS] = stripslashes($_GET[Q_KEYS]);
         }
+
         $_GET[Q_KEYS] = (array)json_decode(urldecode($_GET[Q_KEYS])); // decode and cast the object into an (associative) array
         // Make the array 1-based (keeps the string keys unchanged)
         array_unshift($_GET[Q_KEYS], '__DUMMY__');
@@ -383,4 +396,6 @@ class Dispatcher
         <?php
         return 'END_DISPATCH';
     }
-} // end class Dispatcher
+}
+
+ // end class Dispatcher

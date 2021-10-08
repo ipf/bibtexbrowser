@@ -15,6 +15,7 @@ namespace BibtexBrowser\BibtexBrowser;
 class BibtexDisplay
 {
     public $title;
+
     public $entries;
 
     public function __construct()

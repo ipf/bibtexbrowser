@@ -50,6 +50,7 @@ class BibEntryDisplay
         if ($this->bib->hasField('url')) {
             $download = '<div class="bibentry-document-link"><a href="' . $this->bib->getField('url') . '">View PDF</a></div>';
         }
+
         $reference = '<div class="bibentry-label">Reference:</div><div class="bibentry-reference">' . strip_tags(bib2html($this->bib)) . '</div>';
 
         $bibtex = '<div class="bibentry-label">Bibtex Entry:</div>' . $this->bib->toEntryUnformatted() . '';
@@ -83,6 +84,7 @@ class BibEntryDisplay
                 $result[$v[0]] .= ';' . $v[1];
             }
         }
+
         return $result;
     }
 
@@ -101,7 +103,9 @@ class BibEntryDisplay
 
         if (c('METADATA_GS')) {
             $result = $this->metadata_google_scholar($result);
-        } // end Google Scholar
+        }
+
+        // end Google Scholar
 
         // a fallback to essential dublin core
         if (c('METADATA_DC')) {
@@ -117,7 +121,9 @@ class BibEntryDisplay
         }
 
         return $result;
-    } // end function metadata
+    }
+
+    // end function metadata
 
     public function metadata_opengraph($result)
     {
@@ -133,9 +139,12 @@ class BibEntryDisplay
                 'http://' . @$_SERVER['HTTP_HOST'] . $_SERVER['SCRIPT_NAME'] . '?bib=' . urlencode($this->bib->filename) . '&amp;author=' . urlencode($author)
             ];
         }
+
         $result[] = ['og:published_time', $this->bib->getYear()];
         return $result;
-    } // end function metadata_opengraph
+    }
+
+    // end function metadata_opengraph
 
     public function metadata_dublin_core($result)
     {
@@ -149,6 +158,7 @@ class BibEntryDisplay
         foreach ($this->bib->getArrayOfCommaSeparatedAuthors() as $author) {
             $result[] = ['DC.Creator', $author];
         }
+
         $result[] = ['DC.Issued', $this->bib->getYear()];
         return $result;
     }
@@ -182,9 +192,11 @@ class BibEntryDisplay
                 // in bibtex, the issue number is usually in a field "number"
                 $result[] = ['citation_issue', $this->bib->getField('number')];
             }
+
             if ($this->bib->hasField('issue')) {
                 $result[] = ['citation_issue', $this->bib->getField('issue')];
             }
+
             if ($this->bib->hasField('issn')) {
                 $result[] = ['citation_issue', $this->bib->getField('issn')];
             }
@@ -250,6 +262,7 @@ class BibEntryDisplay
         foreach ($authors as $author) {
             $result[] = ['eprints.creators_name', $author];
         }
+
         $result[] = ['eprints.date', $this->bib->getYear()];
 
         if ($this->bib->hasField('publisher')) {
@@ -283,6 +296,7 @@ class BibEntryDisplay
             if ($this->bib->hasField('number')) {
                 $result[] = ['eprints.number', $this->bib->getField('number')];
             }
+
             if ($this->bib->hasField('institution')) {
                 $result[] = ['eprints.institution', $this->bib->getField('institution')];
             }
@@ -296,7 +310,12 @@ class BibEntryDisplay
         if ($this->bib->hasField('url')) {
             $result[] = ['eprints.official_url', $this->bib->getField('url')];
         }
+
         // --------------------------------- END METADATA EPRINTS
         return $result;
-    } // end method metatada_eprints;
-} // end class BibEntryDisplay
+    }
+
+    // end method metatada_eprints;
+}
+
+ // end class BibEntryDisplay

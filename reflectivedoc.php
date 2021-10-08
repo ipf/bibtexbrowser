@@ -42,6 +42,7 @@ function load($phpfile)
             $new_functions[] = $k;
         }
     }
+
     $diffs[$phpfile]['functions'] = $new_functions;
 
     $new_classes = [];
@@ -50,6 +51,7 @@ function load($phpfile)
             $new_classes[] = $k;
         }
     }
+
     $diffs[$phpfile]['classes'] = $new_classes;
 
     return $diffs[$phpfile];
@@ -68,6 +70,7 @@ function printDocumentedClasses($file)
     foreach (get_classes_in($file) as $klass) {
         $res .= printAPIDocClass($klass, true);
     }
+
     return $res;
 }
 
@@ -130,7 +133,9 @@ function create_wiki_parser()
         // Dec 30 2012
         ->addDelimX('bib', '\bib{', '}')
         ->addDelimX('cite', '\cite{', '}');
-} // end create_wiki_parser
+}
+
+ // end create_wiki_parser
 
 function gakowiki__doc()
 {
@@ -152,6 +157,7 @@ function gk_wiki2html($text)
     if ($parser == null) {
         $parser = create_wiki_parser();
     }
+
     return $parser->parse($text);
 }
 
@@ -161,9 +167,9 @@ function printGk($comment): string
         $result = htmlentities($comment);
         $result = str_replace(['&lt;pre&gt;', '&lt;/pre&gt;'], ['<pre>', '</pre>'], $result);
         // removes lines prefixed "*" often used to have nice API comments
-        $result = preg_replace('/^.*?\*/m', '', $result);
+        $result = preg_replace('#^.*?\*#m', '', $result);
         return '<pre>' . $result . '</pre>';
-    } catch (\BibtexBrowser\BibtexBrowser\GakoParserException $e) {
+    } catch (\BibtexBrowser\BibtexBrowser\GakoParserException $gakoParserException) {
         return '<pre>' . $comment . '</pre>';
     }
 }
@@ -186,6 +192,7 @@ function printDocFuncObj($funcdeclared, $prefix = '', $documented = true)
     if ($documented && strlen($comment) < 1) {
         return '';
     }
+
     $res = '';
     $res .= '<div>';
     $res .= '<b>' . $prefix . $funcdeclared->getName() . '</b>';
@@ -226,6 +233,7 @@ function printAPIDocClass($cname, $documented = true)
     if ($documented && strlen($comment) < 1) {
         return '';
     }
+
     $res .= printGk($comment);
     foreach ($cdeclared->getMethods() as $method) {
         $f = printDocFuncObj($method, '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'/*,$cname.'.'*/, true);
@@ -233,6 +241,7 @@ function printAPIDocClass($cname, $documented = true)
             $res .= $f;
         }
     }
+
     return '<div>' . $res . '</div><hr/>';
 }
 
@@ -244,6 +253,7 @@ function getCodeSnippetsInClass($cname)
     foreach ($cdeclared->getMethods() as $method) {
         $res[] = _getCodeSnippet($method);
     }
+
     return $res;
 }
 
@@ -258,9 +268,10 @@ function getCodeSnippet($function_name)
 function _getCodeSnippet($obj)
 {
     $comment = getComment($obj);
-    if (preg_match('/<pre>(.*)<\/pre>/is', $comment, $matches)) {
+    if (preg_match('#<pre>(.*)<\/pre>#is', $comment, $matches)) {
         return $matches[1];
     }
+
     return '';
 }
 
@@ -282,6 +293,7 @@ function getAllSnippetsInFile($file)
             }
         }
     }
+
     return $res;
 }
 

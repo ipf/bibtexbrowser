@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Utility\CharacterUtility;
+use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
+
 /** represents a bibliographic entry.
  * usage:
  * <pre>
@@ -17,6 +20,9 @@ namespace BibtexBrowser\BibtexBrowser;
 class BibEntry
 {
     // used for representing the type of the bibtex entry internally
+    /**
+     * @var string
+     */
     public const Q_INNER_TYPE = 'x-bibtex-type';
 
     /** The fields (fieldName -> value) of this bib entry with Latex macros interpreted and encoded in the desired character set . */
@@ -73,26 +79,26 @@ class BibEntry
     }
 
     /** Adds timestamp to this object */
-    public function timestamp()
+    public function timestamp(): void
     {
         $this->timestamp = time();
     }
 
     /** Returns the timestamp of this object */
-    public function getTimestamp()
+    public function getTimestamp(): ?int
     {
         return $this->timestamp;
     }
 
     /** Returns the type of this bib entry. */
-    public function getType()
+    public function getType(): string
     {
         // strtolower is important to be case-insensitive
         return strtolower($this->getField(self::Q_INNER_TYPE));
     }
 
     /** Sets the key of this bib entry. */
-    public function setKey($value)
+    public function setKey($value): void
     {
         // Slashes are not allowed in keys because they don't play well with web servers
         // if url-rewriting is used
@@ -103,24 +109,24 @@ class BibEntry
     {
         if (c('BIBTEXBROWSER_USE_LATEX2HTML')) {
             // trim space
-            $value = xtrim($value);
+            $value = CharacterUtility::xtrim($value);
 
             // transform Latex markup to HTML entities (easier than a one to one mapping to each character)
             // HTML entity is an intermediate format
-            $value = latex2html($value);
+            $value = CharacterUtility::latex2html($value);
 
             // transform to the target output encoding
             $value = html_entity_decode($value, ENT_QUOTES | ENT_XHTML, OUTPUT_ENCODING);
         }
+
         return $value;
     }
 
     /** removes a field from this bibtex entry */
-    public function removeField($name)
+    public function removeField($name): void
     {
         $name = strtolower($name);
-        unset($this->raw_fields[$name]);
-        unset($this->fields[$name]);
+        unset($this->raw_fields[$name], $this->fields[$name]);
     }
 
     /** Sets a field of this bib entry. */
@@ -133,8 +139,8 @@ class BibEntry
         // we assume that "comment" is never latex code
         // but instead could contain HTML code (with links using the character "~" for example)
         // so "comment" is not transformed too
-        if ($name != 'url' && $name != 'comment'
-            && !preg_match('/^hp_/', $name) // homepage links should not be transformed with latex2html
+        if ($name !== 'url' && $name !== 'comment'
+            && 0 !== strpos($name, 'hp_') // homepage links should not be transformed with latex2html
         ) {
             $value = $this->transformValue($value);
 
@@ -142,22 +148,19 @@ class BibEntry
             if (function_exists('mb_convert_encoding') && OUTPUT_ENCODING !== BIBTEX_INPUT_ENCODING) {
                 $value = mb_convert_encoding($value, OUTPUT_ENCODING, BIBTEX_INPUT_ENCODING);
             }
-        } else {
-            //echo "xx".$value."xx\n";
         }
-
 
         $this->fields[$name] = $value;
     }
 
     public function clean_top_curly($value)
     {
-        $value = preg_replace('/^\{/', '', $value);
-        return preg_replace('/\}$/', '', $value);
+        $value = preg_replace('#^\{#', '', $value);
+        return preg_replace('#\}$#', '', $value);
     }
 
     /** Sets a type of this bib entry. */
-    public function setType($value)
+    public function setType($value): void
     {
         // 2009-10-25 added trim
         // to support space e.g. "@article  {"
@@ -166,20 +169,19 @@ class BibEntry
         $this->fields[self::Q_INNER_TYPE] = trim($value);
     }
 
-    public function setIndex($index)
+    public function setIndex($index): void
     {
         $this->index = (string)$index;
     }
 
     /** Tries to build a good URL for this entry. The URL should be absolute (better for the generated RSS) */
-    public function getURL()
+    public function getURL(): string
     {
         if (defined('BIBTEXBROWSER_URL_BUILDER')) {
             $f = BIBTEXBROWSER_URL_BUILDER;
             return $f($this);
         }
-//     echo $this->filename;
-//     echo $this->getKey();
+
         return BIBTEXBROWSER_URL . '?' . createQueryString([Q_KEY => $this->getKey(), Q_FILE => $this->filename]);
     }
 
@@ -189,38 +191,40 @@ class BibEntry
         return bib2links($this);
     }
 
-    /** Read the bibtex field $bibfield and return a link with icon (if $iconurl is given) or text
+    /**
+     * Read the bibtex field $bibfield and return a link with icon (if $iconurl is given) or text
      * e.g. given the bibtex entry: @article{myarticle, pdf={myarticle.pdf}},
      * $bibtexentry->getLink('pdf') creates a link to myarticle.pdf using the text '[pdf]'.
      * $bibtexentry->getLink('pdf','pdficon.png') returns &lt;a href="myarticle.pdf">&lt;img src="pdficon.png"/>&lt;/a>
      * if you want a label that is different from the bibtex field, add a third parameter.
      */
-    public function getLink($bibfield, $iconurl = null, $altlabel = null)
+    public function getLink(string $bibfield, ?string $iconurl = null, ?string $altlabel = null): string
     {
         $show = true;
         if ($altlabel == null) {
             $altlabel = $bibfield;
         }
+
         $str = $this->getIconOrTxt($altlabel, $iconurl);
         if ($this->hasField($bibfield)) {
             return '<a' . get_target() . ' href="' . $this->getField($bibfield) . '">' . $str . '</a>';
         }
+
         return '';
     }
 
     /** returns a "[bib]" link */
-    public function getBibLink($iconurl = null)
+    public function getBibLink(?string $iconurl = null): string
     {
         $bibstr = $this->getIconOrTxt('bibtex', $iconurl);
         $href = 'href="' . $this->getURL() . '"';
         // we add biburl and title to be able to retrieve this important information
         // using Xpath expressions on the XHTML source
-        $link = '<a' . get_target() . ' class="biburl" title="' . $this->getKey() . "\" {$href}>$bibstr</a>";
-        return $link;
+        return '<a' . get_target() . ' class="biburl" title="' . $this->getKey() . sprintf('" %s>%s</a>', $href, $bibstr);
     }
 
     /** kept for backward compatibility */
-    public function getPdfLink($iconurl = null, $label = null)
+    public function getPdfLink(?string $iconurl = null, ?string $label = null): string
     {
         return $this->getUrlLink($iconurl);
     }
@@ -230,25 +234,28 @@ class BibEntry
      * Performs a sanity check that the file extension is 'pdf' or 'ps' and uses that as link label.
      * Otherwise (and if no explicit $label is set) the field name is used instead.
      */
-    public function getUrlLink($iconurl = null)
+    public function getUrlLink(?string $iconurl = null): string
     {
         if ($this->hasField('pdf')) {
             return $this->getAndRenameLink('pdf', $iconurl);
         }
+
         if ($this->hasField('url')) {
             return $this->getAndRenameLink('url', $iconurl);
         }
+
         // Adding link to PDF file exported by Zotero
         // ref: https://github.com/monperrus/bibtexbrowser/pull/14
         if ($this->hasField('file')) {
             return $this->getAndRenameLink('file', $iconurl);
         }
+
         return '';
     }
 
     /** See description of 'getUrlLink'
      */
-    public function getAndRenameLink($bibfield, $iconurl = null)
+    public function getAndRenameLink(string $bibfield, ?string $iconurl = null): string
     {
         $extension = strtolower(pathinfo(parse_url($this->getField($bibfield), PHP_URL_PATH), PATHINFO_EXTENSION));
         switch ($extension) {
@@ -269,12 +276,13 @@ class BibEntry
 
 
     /** DOI are a special kind of links, where the url depends on the doi */
-    public function getDoiLink($iconurl = null)
+    public function getDoiLink(?string $iconurl = null): string
     {
         $str = $this->getIconOrTxt('doi', $iconurl);
         if ($this->hasField('doi')) {
             return '<a' . get_target() . ' href="https://doi.org/' . $this->getField('doi') . '">' . $str . '</a>';
         }
+
         return '';
     }
 
@@ -285,6 +293,7 @@ class BibEntry
         if ($this->hasField('gsid')) {
             return ' <a' . get_target() . ' href="https://scholar.google.com/scholar?cites=' . $this->getField('gsid') . '">' . $str . '</a>';
         }
+
         return '';
     }
 
@@ -293,13 +302,14 @@ class BibEntry
      *  or   getIconOrTxt('pdf','http://link/to/icon.png') will use the icon linked by the url, or print '[pdf']
      *  if the url does not point to a valid file (using the "alt" property of the "img" html tag)
      */
-    public function getIconOrTxt($txt, $iconurl = null)
+    public function getIconOrTxt(string $txt, ?string $iconurl = null)
     {
-        if ($iconurl == null) {
+        if ($iconurl === null) {
             $str = '[' . $txt . ']';
         } else {
             $str = '<img class="icon" src="' . $iconurl . '" alt="[' . $txt . ']" title="' . $txt . '"/>';
         }
+
         return $str;
     }
 
@@ -308,9 +318,9 @@ class BibEntry
     {
         if ($this->hasField('abstract')) {
             return $this->getField('abstract');
-        } else {
-            return '';
         }
+
+        return '';
     }
 
     /**
@@ -318,7 +328,7 @@ class BibEntry
      */
     public function getLastName($author)
     {
-        list($firstname, $lastname) = splitFullName($author);
+        [$firstname, $lastname] = splitFullName($author);
         return $lastname;
     }
 
@@ -344,11 +354,9 @@ class BibEntry
         if (array_key_exists(AUTHOR, $this->fields)) {
             return $this->getFormattedAuthorsString();
         }
+
         // 2010-03-02: commented the following, it results in misleading author lists
         // issue found by Alan P. Sexton
-        //if (array_key_exists(EDITOR, $this->fields)) {
-        //  return $this->fields[EDITOR];
-        //}
         return 'Unknown';
     }
 
@@ -373,18 +381,23 @@ class BibEntry
         if ($this->hasField('publisher')) {
             return $this->getField('publisher');
         }
-        if ($this->getType() == 'phdthesis') {
+
+        if ($this->getType() === 'phdthesis') {
             return $this->getField(SCHOOL);
         }
-        if ($this->getType() == 'mastersthesis') {
+
+        if ($this->getType() === 'mastersthesis') {
             return $this->getField(SCHOOL);
         }
-        if ($this->getType() == 'bachelorsthesis') {
+
+        if ($this->getType() === 'bachelorsthesis') {
             return $this->getField(SCHOOL);
         }
-        if ($this->getType() == 'techreport') {
+
+        if ($this->getType() === 'techreport') {
             return $this->getField('institution');
         }
+
         // then we don't know
         return '';
     }
@@ -399,25 +412,28 @@ class BibEntry
     {
         $array = [];
         if (array_key_exists(Q_AUTHOR, $this->raw_fields)) {
-            $array = preg_split('/ and( |$)/ims', @$this->raw_fields[Q_AUTHOR]);
+            $array = preg_split('# and( |$)#ims', @$this->raw_fields[Q_AUTHOR]);
         }
+
         $res = [];
         $arrayCount = count($array);
         // we merge the remaining ones
-        for ($i = 0; $i < $arrayCount - 1; $i++) {
-            if (strpos(latex2html($array[$i], false), '{') !== false && strpos(
-                latex2html($array[$i + 1], false),
+        for ($i = 0; $i < $arrayCount - 1; ++$i) {
+            if (strpos(CharacterUtility::latex2html($array[$i], false), '{') !== false && strpos(
+                CharacterUtility::latex2html($array[$i + 1], false),
                 '}'
             ) !== false) {
                 $res[] = $this->clean_top_curly(trim($array[$i]) . ' and ' . trim($array[$i + 1]));
-                $i += 1;
+                ++$i;
             } else {
                 $res[] = trim($array[$i]);
             }
         }
-        if (!preg_match('/\}/', latex2html($array[count($array) - 1], false))) {
+
+        if (!preg_match('#\}#', CharacterUtility::latex2html($array[count($array) - 1], false))) {
             $res[] = trim($array[count($array) - 1] ?? '');
         }
+
         return $res;
     }
 
@@ -477,7 +493,7 @@ class BibEntry
     {
         list($firstname, $lastname) = splitFullName($author);
         if ($firstname != '') {
-            return $lastname . ' ' . preg_replace("/(\p{Lu})\w*[- ]*/Su", '$1', $firstname);
+            return $lastname . ' ' . preg_replace("#(\p{Lu})\w*[- ]*#Su", '$1', $firstname);
         }
 
         return $lastname;
@@ -542,6 +558,7 @@ class BibEntry
         if (count($authors) === 0) {
             return '';
         }
+
         if (count($authors) === 1) {
             return $authors[0];
         }
@@ -552,16 +569,19 @@ class BibEntry
         if (FORCE_NAMELIST_SEPARATOR !== '') {
             $sep = FORCE_NAMELIST_SEPARATOR;
         }
+
         $authorsCount = count($authors);
-        for ($i = 0; $i < $authorsCount - 2; $i++) {
+        for ($i = 0; $i < $authorsCount - 2; ++$i) {
             $result .= $authors[$i] . $sep;
         }
+
         $lastAuthorSeperator = bibtexbrowser_configuration('LAST_AUTHOR_SEPARATOR');
         // add Oxford comma if there are more than 2 authors
         if (bibtexbrowser_configuration('USE_OXFORD_COMMA') && count($authors) > 2) {
             $lastAuthorSeperator = $sep . $lastAuthorSeperator;
-            $lastAuthorSeperator = preg_replace('/ {2,}/', ' ', $lastAuthorSeperator); // get rid of double spaces
+            $lastAuthorSeperator = preg_replace('# {2,}#', ' ', $lastAuthorSeperator); // get rid of double spaces
         }
+
         return $result . ($authors[count($authors) - 2] . $lastAuthorSeperator . $authors[count($authors) - 1]);
     }
 
@@ -569,7 +589,7 @@ class BibEntry
     public function addAuthorPageLink($author)
     {
         $link = makeHref([Q_AUTHOR => $author]);
-        return "<a {$link}>$author</a>";
+        return sprintf('<a %s>%s</a>', $link, $author);
     }
 
 
@@ -580,6 +600,7 @@ class BibEntry
         foreach ($this->getRawAuthors() as $author) {
             $authors[] = $this->formatAuthorCanonical($author);
         }
+
         return $authors;
     }
 
@@ -593,6 +614,7 @@ class BibEntry
             $author = $this->transformValue($author);
             $authors[] = $this->formatAuthorCommaSeparated($author);
         }
+
         return $authors;
     }
 
@@ -609,7 +631,7 @@ class BibEntry
 
     public function getHomePageKey($author)
     {
-        return strtolower('hp_' . preg_replace('/ /', '', $this->formatAuthorCanonical(latex2html($author))));
+        return strtolower('hp_' . preg_replace('# #', '', $this->formatAuthorCanonical(CharacterUtility::latex2html($author))));
     }
 
     /** add the link to the homepage if it is defined in a string
@@ -627,6 +649,7 @@ class BibEntry
         if (isset($this->homepages[$homepage])) {
             $author = '<a href="' . $this->homepages[$homepage] . '">' . $author . '</a>';
         }
+
         return $author;
     }
 
@@ -635,7 +658,7 @@ class BibEntry
     public function getEditors()
     {
         $editors = [];
-        return preg_split('/ and /i', $this->getField(EDITOR));
+        return preg_split('# and #i', $this->getField(EDITOR));
     }
 
     /** Returns the editors of this entry as an arry */
@@ -645,17 +668,19 @@ class BibEntry
         foreach ($this->getEditors() as $editor) {
             $editors[] = $this->formatAuthor($editor);
         }
+
         $sep = bibtexbrowser_configuration('USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT') ? '; ' : ', ';
         if (FORCE_NAMELIST_SEPARATOR !== '') {
             $sep = FORCE_NAMELIST_SEPARATOR;
         }
+
         return implode($sep, $editors) . ', ' . (count($editors) > 1 ? 'eds.' : 'ed.');
     }
 
     /** Returns the year of this entry? */
     public function getYear()
     {
-        return __(strtolower($this->getField('year') ?? ''));
+        return InternationalizationUtility::translate(strtolower($this->getField('year') ?? ''));
     }
 
     public function getYearRaw()
@@ -666,7 +691,7 @@ class BibEntry
     /** returns the array of keywords */
     public function getKeywords()
     {
-        return preg_split('/[,;\\/]/', $this->getField('keywords'));
+        return preg_split('#[,;\/]#', $this->getField('keywords'));
     }
 
     /** Returns the value of the given field? */
@@ -694,25 +719,32 @@ class BibEntry
         if (c('ABBRV_TYPE') === 'index') {
             return $this->index;
         }
+
         if (c('ABBRV_TYPE') === 'none') {
             return '';
         }
+
         if (c('ABBRV_TYPE') === 'key') {
             return $this->getKey();
         }
+
         if (c('ABBRV_TYPE') === 'year') {
             return $this->getYear();
         }
+
         if (c('ABBRV_TYPE') === 'x-abbrv') {
             if ($this->hasField('x-abbrv')) {
                 return $this->getField('x-abbrv');
             }
+
             return $this->abbrv;
         }
+
         if (c('ABBRV_TYPE') === 'keys-index') {
             if (isset($_GET[Q_INNER_KEYS_INDEX])) {
                 return $_GET[Q_INNER_KEYS_INDEX][$this->getKey()];
             }
+
             return '';
         }
 
@@ -725,21 +757,19 @@ class BibEntry
     public function getAbbrv()
     {
         $abbrv = $this->getRawAbbrv();
-        if (c('ABBRV_TYPE') != 'none') {
+        if (c('ABBRV_TYPE') !== 'none') {
             $abbrv = '[' . $abbrv . ']';
         }
+
         return $abbrv;
     }
-
 
     /** Sets the abbreviation (e.g. [OOPSLA] or [1]) */
     public function setAbbrv($abbrv)
     {
-        //if (!is_string($abbrv)) { throw new Exception('Illegal argument'); }
         $this->abbrv = $abbrv;
         return $this;
     }
-
 
     /** Returns the verbatim text of this bib entry. */
     public function getText()
@@ -747,6 +777,7 @@ class BibEntry
         if (c('BIBTEXBROWSER_BIBTEX_VIEW') === 'original') {
             return $this->text;
         }
+
         if (c('BIBTEXBROWSER_BIBTEX_VIEW') === 'reconstructed') {
             $result = '@' . $this->getType() . '{' . $this->getKey() . ",\n";
             foreach ($this->raw_fields as $k => $v) {
@@ -755,8 +786,10 @@ class BibEntry
                     $result .= ' ' . $k . ' = {' . $v . '},' . "\n";
                 }
             }
+
             return $result . "}\n";
         }
+
         throw new \Exception('incorrect value of BIBTEXBROWSER_BIBTEX_VIEW: ' . BIBTEXBROWSER_BIBTEX_VIEW);
     }
 
@@ -772,6 +805,7 @@ class BibEntry
             return preg_match('/' . $phrase . '/i', $this->getConstants() . ' ' . implode(' ', $this->getFields()));
             //return stripos($this->getText(), $phrase) !== false;
         }
+
         //if ($this->hasField($field) &&  (stripos($this->getField($field), $phrase) !== false) ) {
         return $this->hasField($field) && (preg_match('/' . $phrase . '/i', $this->getField($field)));
     }
@@ -797,18 +831,17 @@ class BibEntry
                     if (c('ABBRV_TYPE') === 'none') {
                         die('Cannot define an empty term!');
                     }
+
                     break;
                 case 'none':
                     break;
             }
+
             $result .= $this->anchor();
-            switch (BIBTEXBROWSER_LAYOUT) { // close bibref and open bibitem
-                case 'table':
-                    $result .= $this->getAbbrv() . '</td><td class="bibitem">';
-                    break;
-                case 'definition':
-                    $result .= $this->getAbbrv() . '</dt><dd class="bibitem">';
-                    break;
+            if (BIBTEXBROWSER_LAYOUT === 'table') {
+                $result .= $this->getAbbrv() . '</td><td class="bibitem">';
+            } elseif (BIBTEXBROWSER_LAYOUT === 'definition') {
+                $result .= $this->getAbbrv() . '</dt><dd class="bibitem">';
             }
         }
 
@@ -820,10 +853,8 @@ class BibEntry
 
         if ($wrapped) {
             switch (BIBTEXBROWSER_LAYOUT) { // close row
-                case 'list':
-                    $result .= '</li>' . "\n";
-                    break;
                 case 'ordered_list':
+                case 'list':
                     $result .= '</li>' . "\n";
                     break;
                 case 'table':
@@ -836,6 +867,7 @@ class BibEntry
                     break;
             }
         }
+
         return $result;
     }
 
@@ -848,58 +880,57 @@ class BibEntry
         if (c('METADATA_COINS') == false) {
             return;
         }
+
         $url_parts = [];
         $url_parts[] = 'ctx_ver=Z39.88-2004';
 
         $type = $this->getType();
-        if ($type == 'book') {
-            $url_parts[] = 'rft_val_fmt=' . s3988('info:ofi/fmt:kev:mtx:book');
-            $url_parts[] = 'rft.btitle=' . s3988($this->getTitle());
+        if ($type === 'book') {
+            $url_parts[] = 'rft_val_fmt=' . CharacterUtility::s3988('info:ofi/fmt:kev:mtx:book');
+            $url_parts[] = 'rft.btitle=' . CharacterUtility::s3988($this->getTitle());
             $url_parts[] = 'rft.genre=book';
-        } elseif ($type == 'inproceedings') {
-            $url_parts[] = 'rft_val_fmt=' . s3988('info:ofi/fmt:kev:mtx:book');
-            $url_parts[] = 'rft.atitle=' . s3988($this->getTitle());
-            $url_parts[] = 'rft.btitle=' . s3988($this->getField(BOOKTITLE));
+        } elseif ($type === 'inproceedings') {
+            $url_parts[] = 'rft_val_fmt=' . CharacterUtility::s3988('info:ofi/fmt:kev:mtx:book');
+            $url_parts[] = 'rft.atitle=' . CharacterUtility::s3988($this->getTitle());
+            $url_parts[] = 'rft.btitle=' . CharacterUtility::s3988($this->getField(BOOKTITLE));
 
             // zotero does not support with this proceeding and conference
             // they give the wrong title
-            //$url_parts[]='rft.genre=proceeding';
-            //$url_parts[]='rft.genre=conference';
             $url_parts[] = 'rft.genre=bookitem';
-        } elseif ($type == 'incollection') {
-            $url_parts[] = 'rft_val_fmt=' . s3988('info:ofi/fmt:kev:mtx:book');
-            $url_parts[] = 'rft.btitle=' . s3988($this->getField(BOOKTITLE));
-            $url_parts[] = 'rft.atitle=' . s3988($this->getTitle());
+        } elseif ($type === 'incollection') {
+            $url_parts[] = 'rft_val_fmt=' . CharacterUtility::s3988('info:ofi/fmt:kev:mtx:book');
+            $url_parts[] = 'rft.btitle=' . CharacterUtility::s3988($this->getField(BOOKTITLE));
+            $url_parts[] = 'rft.atitle=' . CharacterUtility::s3988($this->getTitle());
             $url_parts[] = 'rft.genre=bookitem';
-        } elseif ($type == 'article') {
-            $url_parts[] = 'rft_val_fmt=' . s3988('info:ofi/fmt:kev:mtx:journal');
-            $url_parts[] = 'rft.atitle=' . s3988($this->getTitle());
-            $url_parts[] = 'rft.jtitle=' . s3988($this->getField('journal'));
-            $url_parts[] = 'rft.volume=' . s3988($this->getField('volume'));
-            $url_parts[] = 'rft.issue=' . s3988($this->getField('issue'));
+        } elseif ($type === 'article') {
+            $url_parts[] = 'rft_val_fmt=' . CharacterUtility::s3988('info:ofi/fmt:kev:mtx:journal');
+            $url_parts[] = 'rft.atitle=' . CharacterUtility::s3988($this->getTitle());
+            $url_parts[] = 'rft.jtitle=' . CharacterUtility::s3988($this->getField('journal'));
+            $url_parts[] = 'rft.volume=' . CharacterUtility::s3988($this->getField('volume'));
+            $url_parts[] = 'rft.issue=' . CharacterUtility::s3988($this->getField('issue'));
         } else { // techreport, phdthesis
-            $url_parts[] = 'rft_val_fmt=' . s3988('info:ofi/fmt:kev:mtx:book');
-            $url_parts[] = 'rft.btitle=' . s3988($this->getTitle());
+            $url_parts[] = 'rft_val_fmt=' . CharacterUtility::s3988('info:ofi/fmt:kev:mtx:book');
+            $url_parts[] = 'rft.btitle=' . CharacterUtility::s3988($this->getTitle());
             $url_parts[] = 'rft.genre=report';
         }
 
-        $url_parts[] = 'rft.pub=' . s3988($this->getPublisher());
+        $url_parts[] = 'rft.pub=' . CharacterUtility::s3988($this->getPublisher());
 
         // referent
         if ($this->hasField('url')) {
-            $url_parts[] = 'rft_id=' . s3988($this->getField('url'));
+            $url_parts[] = 'rft_id=' . CharacterUtility::s3988($this->getField('url'));
         } elseif ($this->hasField('doi')) {
-            $url_parts[] = 'rft_id=' . s3988('info:doi/' . $this->getField('doi'));
+            $url_parts[] = 'rft_id=' . CharacterUtility::s3988('info:doi/' . $this->getField('doi'));
         }
 
         // referrer, the id of a collection of objects
         // see also http://www.openurl.info/registry/docs/pdf/info-sid.pdf
-        $url_parts[] = 'rfr_id=' . s3988('info:sid/' . @$_SERVER['HTTP_HOST'] . ':' . basename(@$_GET[Q_FILE]));
+        $url_parts[] = 'rfr_id=' . CharacterUtility::s3988('info:sid/' . @$_SERVER['HTTP_HOST'] . ':' . basename(@$_GET[Q_FILE]));
 
-        $url_parts[] = 'rft.date=' . s3988($this->getYear());
+        $url_parts[] = 'rft.date=' . CharacterUtility::s3988($this->getYear());
 
         foreach ($this->getFormattedAuthorsArray() as $au) {
-            $url_parts[] = 'rft.au=' . s3988($au);
+            $url_parts[] = 'rft.au=' . CharacterUtility::s3988($au);
         }
 
 
@@ -921,6 +952,7 @@ class BibEntry
         foreach ($this->constants as $k => $v) {
             $result .= '@string{' . $k . '="' . $v . "\"}\n";
         }
+
         return $result;
     }
 
@@ -953,6 +985,7 @@ class BibEntry
                 $vals[$field] = $href;
             }
         }
+
         foreach ($vals as $field => $href) {
             if ($this->hasField($field)) {
                 // this is not a parsing but a simple replacement
@@ -979,6 +1012,7 @@ class BibEntry
         if ($this->crossref != null) {
             $s .= $this->crossref->getFullText() . "\n";
         }
+
         $s .= $this->getConstants();
         $s .= $this->getText();
         return $s;
@@ -987,7 +1021,7 @@ class BibEntry
     /** returns the first and last page of the entry as an array ([0]->first,  [2]->last) */
     public function getPages()
     {
-        preg_match('/(\d+).*?(\d+)/', $this->getField('pages'), $matches);
+        preg_match('#(\d+).*?(\d+)#', $this->getField('pages'), $matches);
         array_shift($matches);
         return $matches;
     }
@@ -1003,23 +1037,28 @@ class BibEntry
         if ($this->hasField('doi')) {
             $result .= '  doi: "' . $this->getField('doi') . '"' . "\n";
         }
+
         if ($this->hasField('year')) {
             $result .= '  year: "' . $this->getField('year') . '"' . "\n";
         }
+
         if ($this->hasField('journal')) {
             $result .= "  type: article\n";
             $result .= '  journal: "' . $this->getField('journal') . '"' . "\n";
         }
+
         if ($this->hasField('booktitle')) {
             $result .= "  type: conference-paper\n";
             $result .= '  conference: "' . $this->getField('booktitle') . '"' . "\n";
         }
+
         $result .= '  authors:' . "\n";
         foreach ($this->getFormattedAuthorsArray() as $author) {
             $split = splitFullName($author);
             $result .= '    - family-names: ' . $split[1] . "\n";
             $result .= '      given-names: ' . $split[0] . "\n";
         }
+
         return $result;
     }
-} // end class BibEntry
+}

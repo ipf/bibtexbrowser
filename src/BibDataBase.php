@@ -125,6 +125,7 @@ class BibDataBase
         foreach ($this->bibdb as $b) {
             $result[$b->getType()][] = $b;
         }
+
         return $result;
     }
 
@@ -135,6 +136,7 @@ class BibDataBase
         foreach ($this->bibdb as $b) {
             $result[$b->getType()] = 1;
         }
+
         return array_keys($result);
     }
 
@@ -152,6 +154,7 @@ class BibDataBase
                 @$tmp[$bib->getLastName($a)] = $a;
             }
         }
+
         ksort($tmp);
         $result = [];
         foreach ($tmp as $k => $v) {
@@ -170,12 +173,14 @@ class BibDataBase
             if (!$bib->hasField('keywords')) {
                 continue;
             }
+
             $tags = $bib->getKeywords();
             foreach ($tags as $a) {
                 $ta = trim($a);
                 $result[$ta] = $ta;
             }
         }
+
         asort($result);
         return $result;
     }
@@ -190,6 +195,7 @@ class BibDataBase
             if (!$bib->hasField('year')) {
                 continue;
             }
+
             $year = strtolower($bib->getYearRaw());
             $yearInt = (int)$year;
 
@@ -230,6 +236,7 @@ class BibDataBase
         if (!$entry->hasField('key')) {
             throw new \Exception('error: a bibliographic entry must have a key ' . $entry->getText());
         }
+
         // we keep its insertion order
         $entry->order = count($this->bibdb);
         $this->bibdb[$entry->getKey()] = $entry;
@@ -248,6 +255,7 @@ class BibDataBase
                 $result[] = $bib;
             }
         }
+
         return $result;
     }
 
@@ -259,6 +267,7 @@ class BibDataBase
         if (count($query) < 1) {
             return [];
         }
+
         if (isset($query[Q_ALL])) {
             return array_values($this->bibdb);
         }
@@ -319,10 +328,12 @@ class BibDataBase
                     break;
                 }
             }
+
             if ($entryisselected) {
                 $result[] = $bib;
             }
         }
+
         return $result;
     }
 
@@ -333,6 +344,7 @@ class BibDataBase
         foreach ($this->stringdb as $entry) {
             $s .= $entry->toString() . "\n";
         }
+
         return $s;
     }
 
@@ -344,6 +356,7 @@ class BibDataBase
         foreach ($this->bibdb as $bibentry) {
             $s .= $bibentry->getText() . "\n";
         }
+
         return $s;
     }
 }

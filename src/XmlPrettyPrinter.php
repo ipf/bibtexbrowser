@@ -8,7 +8,7 @@ namespace BibtexBrowser\BibtexBrowser;
  * usage:
  * see snippet of [[#StateBasedBibParser]]
  */
-class XmlPrettyPrinter extends ParserDelegate
+class XmlPrettyPrinter implements ParserDelegateInterface
 {
     public function beginFile()
     {
@@ -47,4 +47,9 @@ class XmlPrettyPrinter extends ParserDelegate
     {
         print "</entry>\n";
     }
-} // end class XMLPrettyPrinter
+
+    public function entryValuePart($key, $value, $type)
+    {
+        // TODO: Implement entryValuePart() method.
+    }
+}

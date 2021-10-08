@@ -16,10 +16,12 @@ namespace BibtexBrowser\BibtexBrowser;
 class AcademicDisplay
 {
     public string $title = '';
+
     /**
      * @var mixed
      */
     public $entries;
+
     public ?BibDataBase $db = null;
 
     public function getTitle(): string
@@ -54,8 +56,10 @@ class AcademicDisplay
         if (count($entries) > 0) {
             echo "\n" . '<div class="sheader">' . $title . '</div>' . "\n";
         }
+
         $display = new SimpleDisplay();
         $display->setEntries($entries);
+
         $display->headerCSS = 'theader';
         $display->display();
     }
@@ -77,7 +81,7 @@ class AcademicDisplay
                 $entries = $this->db->multisearch($section['query']);
 
                 if (count($entries) > 0) {
-                    $anchor = preg_replace('/[^a-zA-Z]/', '', $section['title']);
+                    $anchor = preg_replace('#[^a-zA-Z]#', '', $section['title']);
                     echo '<li><a href="#' . $anchor . '">' . $section['title'] . ' (' . count($entries) . ')</a></li>';
 
                     $display = new SimpleDisplay();
@@ -93,6 +97,7 @@ class AcademicDisplay
                     ];
                 }
             }
+
             echo '</ul>';
 
             foreach ($sections as $section) {

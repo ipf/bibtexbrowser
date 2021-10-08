@@ -16,8 +16,11 @@ namespace BibtexBrowser\BibtexBrowser;
  * notes:
  * method build can be used several times, bibtex entries are accumulated in the builder
  */
-class BibDBBuilder extends ParserDelegate
+class BibDBBuilder implements ParserDelegateInterface
 {
+    /**
+     * @var string
+     */
     private const DATA_DIR = '';
 
     /** A hashtable from keys to bib entries (BibEntry). */
@@ -26,11 +29,11 @@ class BibDBBuilder extends ParserDelegate
     /** A hashtable of constant strings */
     public array $stringdb = [];
 
-    public $filename;
+    public string $filename = '';
 
-    public ?\BibtexBrowser\BibtexBrowser\BibEntry $currentEntry = null;
+    public ?BibEntry $currentEntry = null;
 
-    public function build($bibfilename, $handle = null): void
+    public function build(string $bibfilename, $handle = null): void
     {
         $this->filename = $bibfilename;
         if ($handle == null) {
@@ -82,7 +85,7 @@ class BibDBBuilder extends ParserDelegate
         // support for Bibtex concatenation
         // see http://newton.ex.ac.uk/tex/pack/bibtex/btxdoc/node3.html
         // (?<! is a negative look-behind assertion, see http://www.php.net/manual/en/regexp.reference.assertions.php
-        $entryvalue_array = preg_split('/(?<!\\\\)#/', $entryvalue);
+        $entryvalue_array = preg_split('#(?<!\\\)\##', $entryvalue);
         foreach ($entryvalue_array as $k => $v) {
             // spaces are allowed when using # and they are not taken into account
             // however # is not itself replaced by a space
@@ -98,6 +101,7 @@ class BibDBBuilder extends ParserDelegate
                 $this->currentEntry->constants[$stringKey] = $this->stringdb[$stringKey]->value;
             }
         }
+
         $entryvalue = implode('', $entryvalue_array);
 
         $this->currentEntry->setField($fieldkey, $entryvalue);
@@ -110,7 +114,6 @@ class BibDBBuilder extends ParserDelegate
 
     public function setEntryKey($entrykey)
     {
-        //echo "new entry:".$entrykey."\n";
         $this->currentEntry->setKey($entrykey);
     }
 
@@ -122,12 +125,10 @@ class BibDBBuilder extends ParserDelegate
 
     public function endEntry($entrysource)
     {
-
-// we add a timestamp
         $this->currentEntry->timestamp();
 
         // we add a key if there is no key
-        if (!$this->currentEntry->hasField(Q_KEY) && $this->currentEntry->getType() != 'string') {
+        if (!$this->currentEntry->hasField(Q_KEY) && $this->currentEntry->getType() !== 'string') {
             $this->currentEntry->setField(Q_KEY, md5($entrysource));
         }
 
@@ -148,10 +149,10 @@ class BibDBBuilder extends ParserDelegate
         }
 
         // ignoring jabref comments
-        if (($this->currentEntry->getType() == 'comment')) {
+        if (($this->currentEntry->getType() === 'comment')) {
             /* do nothing for jabref comments */
         } // we add it to the string database
-        elseif ($this->currentEntry->getType() == 'string') {
+        elseif ($this->currentEntry->getType() === 'string') {
             foreach ($this->currentEntry->fields as $k => $v) {
                 if ($k != BibEntry::Q_INNER_TYPE) {
                     $this->stringdb[$k] = new StringEntry($k, $v, $this->filename);
@@ -162,4 +163,9 @@ class BibDBBuilder extends ParserDelegate
             $this->builtdb[$this->currentEntry->getKey()] = $this->currentEntry;
         }
     }
-} // end class BibDBBuilder
+
+    public function entryValuePart($key, $value, $type)
+    {
+        // TODO: Implement entryValuePart() method.
+    }
+}

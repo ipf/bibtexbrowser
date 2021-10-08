@@ -10,11 +10,12 @@ use BibtexBrowser\BibtexBrowser\BibEntryDisplay;
 use BibtexBrowser\BibtexBrowser\PagedDisplay;
 use BibtexBrowser\BibtexBrowser\SimpleDisplay;
 use BibtexBrowser\BibtexBrowser\SimpleDisplayExt;
+use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
 use PHPUnit\Framework\TestCase;
 
 class BibtexBrowsertest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         // resetting the default link style
         bibtexbrowser_configure('BIBTEXBROWSER_LINK_STYLE', 'bib2links_default');
@@ -27,9 +28,11 @@ class BibtexBrowsertest extends TestCase
         if (!is_file('gakowiki-syntax.php')) {
             return;
         }
+
         if (!function_exists('gk_wiki2html')) {
             include(__DIR__ . '/gakowiki-syntax.php');
         }
+
         $result = create_wiki_parser()->parse(file_get_contents('README.wiki'));
         $this->assertEquals(
             1,
@@ -95,7 +98,8 @@ class BibtexBrowsertest extends TestCase
         $css_classes = [];
         foreach ($xml->xpath('//node()/@class') as $v) {
             $css_classes[] = $v->__toString();
-        };
+        }
+        ;
         sort($css_classes);
         return $css_classes;
     }
@@ -208,7 +212,7 @@ class BibtexBrowsertest extends TestCase
         global $BIBTEXBROWSER_LANG;
         $BIBTEXBROWSER_LANG = [];
         $BIBTEXBROWSER_LANG['Refereed Conference Papers'] = 'foo';
-        $this->assertEquals('foo', __('Refereed Conference Papers'));
+        $this->assertEquals('foo', InternationalizationUtility::translate('Refereed Conference Papers'));
 
         $BIBTEXBROWSER_LANG['Books'] = 'Livres';
         $d = new AcademicDisplay();
@@ -303,6 +307,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $dis = new BibEntryDisplay($db->getEntryByKey('aKey'));
         $metadata = $dis->metadata_dict();
         //print_r($metadata);
@@ -325,13 +330,14 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $dis = new BibEntryDisplay($db->getEntryByKey('aKey'));
         $metadata = $dis->metadata_dict();
 
         //print_r($metadata);
         $this->assertEquals('A Book', $metadata['og:title']);
         $this->assertEquals('article', $metadata['og:type']);
-        $this->assertTrue(1 == preg_match("/http:.*author=Martin\+Monperrus/", $metadata['og:author']));
+        $this->assertTrue(1 == preg_match("#http:.*author=Martin\+Monperrus#", $metadata['og:author']));
         $this->assertEquals('2009', $metadata['og:published_time']);
     }
 
@@ -347,6 +353,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $btb = new BibDataBase();
         $btb->update_internal('inline', $test_data);
+
         $first_entry = $btb->bibdb[array_keys($btb->bibdb)[0]];
 //    $this->assertTrue(strpos('A Book{} $\mbox{foo}$',$first_entry->toHTML());
         $this->assertEquals('A Book $\mbox{foo}$ tt $\boo{t}$', $first_entry->getTitle());
@@ -363,6 +370,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $btb = new BibDataBase();
         $btb->update_internal('inline', $test_data);
+
         $first_entry = $btb->bibdb[array_keys($btb->bibdb)[0]];
         $this->assertEquals('<a href="myarticle.pdf">[pdf]</a>', $first_entry->getLink('pdf'));
         $this->assertEquals('<a href="myarticle.pdf">[pdf]</a>', $first_entry->getPdfLink());
@@ -389,6 +397,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $btb = new BibDataBase();
         $btb->update_internal('inline', $test_data);
+
         $first_entry = $btb->bibdb[array_keys($btb->bibdb)[0]];
         $this->assertEquals('<a href="myarticle.pdf">[pdf]</a>', $first_entry->getPdfLink());
     }
@@ -405,6 +414,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $btb = new BibDataBase();
         $btb->update_internal('inline', $test_data);
+
         $first_entry = $btb->bibdb[array_keys($btb->bibdb)[0]];
         $this->assertEquals(
             '<pre class="purebibtex">@Article{Baldwin2014Quantum,Doi={<a href="https://doi.org/10.1103/PhysRevA.90.012110">10.1103/PhysRevA.90.012110</a>},Url={<a href="http://link.aps.org/doi/10.1103/PhysRevA.90.012110">http://link.aps.org/doi/10.1103/PhysRevA.90.012110</a>}}</pre>',
@@ -422,6 +432,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $dis = $db->getEntryByKey('aKey');
         $this->assertEquals(
             "@article{aKey,title={A Book},author={Martin M\'e},publisher={Springer},year=2009,pages={42--4242},number=1}",
@@ -447,6 +458,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $dis = $db->getEntryByKey('aKey');
         $this->assertEquals('à Book', $dis->getTitle());
         $this->assertEquals('Jé Lo', $dis->getFormattedAuthorsString());
@@ -460,6 +472,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $dis = $db->getEntryByKey('aKey');
         $this->assertEquals("\`a Book", $dis->getTitle());
         $this->assertEquals("J\'e Lo", $dis->getFormattedAuthorsString());
@@ -473,13 +486,14 @@ class BibtexBrowsertest extends TestCase
         bibtexbrowser_configure('PAGE_SIZE', $PAGE_SIZE);
         $db = new BibDataBase();
         $db->load('bibacid-utf8.bib');
+
         $d = new PagedDisplay();
         $d->setEntries($db->bibdb);
         ob_start();
         $d->display();
         $content = '<div>' . ob_get_clean() . '</div>';
         $xml = new \SimpleXMLElement($content);
-        $result = $xml->xpath('//td[@class=\'bibref\']');
+        $result = $xml->xpath("//td[@class='bibref']");
         $this->assertEquals($PAGE_SIZE, count($result));
     }
 
@@ -493,6 +507,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $dis = $db->getEntryByKey('aKey');
         $this->assertEquals(2, count($dis->getKeywords()));
     }
@@ -541,6 +556,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $entry = $db->getEntryByKey('aKey61');
 
         // test with formatting with default options same as getRawAuthors()
@@ -618,6 +634,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $entry = $db->getEntryByKey('aKey61');
         $authors = $entry->getRawAuthors();
         $this->assertEquals(1, count($authors));
@@ -630,6 +647,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $entry = $db->getEntryByKey('aKey61');
         $authors = $entry->getRawAuthors();
         $this->assertEquals(2, count($authors));
@@ -644,6 +662,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $entry = $db->getEntryByKey('aKey61');
         $authors = $entry->getRawAuthors();
         $this->assertEquals(6, count($authors));
@@ -657,10 +676,10 @@ class BibtexBrowsertest extends TestCase
 
     public function test_latex2html()
     {
-        $this->assertEquals('"', latex2html('``'));
-        $this->assertEquals('"', latex2html("''"));
-        $this->assertEquals('&eacute;', latex2html("\'e"));
-        $this->assertEquals('&eacute;', latex2html("{\'e}"));
+        $this->assertEquals('"', \BibtexBrowser\BibtexBrowser\tests\latex2html('``'));
+        $this->assertEquals('"', \BibtexBrowser\BibtexBrowser\tests\latex2html("''"));
+        $this->assertEquals('&eacute;', \BibtexBrowser\BibtexBrowser\tests\latex2html("\'e"));
+        $this->assertEquals('&eacute;', \BibtexBrowser\BibtexBrowser\tests\latex2html("{\'e}"));
     }
 
     public function test_homepage_link()
@@ -673,6 +692,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $entry = $db->getEntryByKey('aKey61');
         $authors = $entry->getFormattedAuthorsArray();
         $this->assertEquals('<a href="http://www.monperrus.net/~martin">Martin Monperrus</a>', $authors[0]);
@@ -798,6 +818,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $entry = $db->getEntryByKey($key);
         $this->assertEquals($bibtex, $entry->getText());
     }
@@ -812,6 +833,7 @@ class BibtexBrowsertest extends TestCase
         fseek($test_data, 0);
         $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
         $db->update_internal('inline', $test_data);
+
         $entry = $db->getEntryByKey('key');
         $this->assertStringContainsString(
             '<a href="https://scholar.google.com/scholar?cites=1234">[citations]</a>',
@@ -910,6 +932,7 @@ class BibtexBrowsertest extends TestCase
     {
         $btb = new BibDataBase();
         $btb->load('bibacid-utf8.bib');
+
         $entry = $btb->bibdb['arXiv-1807.05030'];
         $expected = "cff-version: 1.2.0\n" .
             "# CITATION.cff created with https://github.com/monperrus/bibtexbrowser/\n" .

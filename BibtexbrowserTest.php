@@ -16,6 +16,7 @@ function exception_error_handler($severity, $message, $file, $line)
         //trigger_error($message);
         return;
     }
+
     throw new ErrorException($message, 0, $severity, $file, $line);
 }
 
@@ -36,11 +37,13 @@ foreach (getAllSnippetsInFile('bibtexbrowser.php') as $snippet) {
     eval($snippet);
     ob_get_clean();
     unset($_GET['bib']);
-    $nsnippet++;
+    ++$nsnippet;
 }
+
 if ($nsnippet != 19) {
     die('oops ' . $nsnippet);
 }
+
 restore_error_handler();
 
 @copy('bibtexbrowser.local.php.bak', 'bibtexbrowser.local.php');

@@ -16,10 +16,12 @@ namespace BibtexBrowser\BibtexBrowser;
 class PagedDisplay
 {
     public array $entries;
+
     /**
      * @var int|mixed
      */
     public $page;
+
     public array $query = [];
 
     public function __construct()
@@ -70,8 +72,8 @@ class PagedDisplay
         }
 
         $this->menu($less, $more);
-        print_header_layout();
-        for ($i = 0; $i < bibtexbrowser_configuration('PAGE_SIZE'); $i++) {
+        \BibtexBrowser\BibtexBrowser\print_header_layout();
+        for ($i = 0; $i < bibtexbrowser_configuration('PAGE_SIZE'); ++$i) {
             $index = ($this->page - 1) * bibtexbrowser_configuration('PAGE_SIZE') + $i;
             if (isset($this->entries[$index])) {
                 $bib = $this->entries[$index];
@@ -79,9 +81,9 @@ class PagedDisplay
             } else {
                 //break;
             }
-        } // end foreach
+        }
 
-        print_footer_layout();
+        \BibtexBrowser\BibtexBrowser\print_footer_layout();
 
         $this->menu($less, $more);
     }
@@ -105,6 +107,7 @@ class PagedDisplay
         if ($more == true) {
             echo '<a ' . makeHref($next) . '>Next Page</a>';
         }
+
         echo '</span>';
     }
 }

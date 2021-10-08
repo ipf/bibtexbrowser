@@ -18,6 +18,7 @@ namespace BibtexBrowser\BibtexBrowser;
 class RSSDisplay
 {
     public $entries;
+
     public string $title = 'RSS produced by bibtexbrowser';
 
     public function __construct()
@@ -42,10 +43,10 @@ class RSSDisplay
         // some entities may still be here, we remove them
         // we replace html entities e.g. &eacute; by nothing
         // however XML entities are kept (e.g. &#53;)
-        $desc = preg_replace('/&\w+;/', '', $desc);
+        $desc = preg_replace('#&\w+;#', '', $desc);
 
         // bullet proofing ampersand
-        $desc = preg_replace('/&([^#])/', '&#38;$1', $desc);
+        $desc = preg_replace('#&([^\#])#', '&#38;$1', $desc);
 
         // be careful of <
         $desc = str_replace('<', '&#60;', $desc);
@@ -99,7 +100,9 @@ class RSSDisplay
                         <guid isPermaLink="false"><?php echo urlencode(@$_GET[Q_FILE] . '::' . $bibentry->getKey()); ?></guid>
                     </item>
                     <?php
-                } /* end foreach */ ?>
+                }
+
+        /* end foreach */ ?>
             </channel>
         </rss>
 

@@ -2,6 +2,9 @@
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
+use BibtexBrowser\BibtexBrowser\Utility\TemplateUtility;
+
 /** displays the summary information of all bib entries.
  * usage:
  * <pre>
@@ -14,6 +17,7 @@ namespace BibtexBrowser\BibtexBrowser;
 class SimpleDisplay
 {
     public $query;
+
     public string $headerCSS = 'sheader';
 
     public array $options = [];
@@ -27,6 +31,7 @@ class SimpleDisplay
         if ($db == null) {
             return;
         }
+
         $this->setEntries($db->multisearch($query));
     }
 
@@ -65,7 +70,8 @@ class SimpleDisplay
         $index = 1;
         foreach ($this->entries as $bib) {
             $bib->setAbbrv((string)$index++);
-        } // end foreach
+        }
+
         return $this->entries;
     }
 
@@ -79,7 +85,8 @@ class SimpleDisplay
         $index = count($this->entries);
         foreach ($this->entries as $bib) {
             $bib->setAbbrv((string)$index--);
-        } // end foreach
+        }
+
         return $this->entries;
     }
 
@@ -106,9 +113,10 @@ class SimpleDisplay
             if ($this->changeSection($pred, $bib)) {
                 $i = 1;
             }
+
             $bib->setIndex($i++);
             $pred = $bib;
-        } // end foreach
+        }
     }
 
     public function setIndicesInDecreasingOrder()
@@ -119,11 +127,11 @@ class SimpleDisplay
             // by default, index are in decreasing order
             // so that when you add a publicaton recent , the indices of preceding publications don't change
             $bib->setIndex($count - ($i++));
-        } // end foreach
+        }
     }
 
     /** Displays a set of bibtex entries in an HTML table */
-    public function display()
+    public function display(): void
     {
         usort($this->entries, 'compare_bib_entries');
 
@@ -144,16 +152,7 @@ class SimpleDisplay
             echo 'Options: ' . @implode(',', $this->options) . '<br/>';
         }
 
-//     if ($this->headingLevel == BIBTEXBROWSER_HTMLHEADINGLEVEL) {
-//       echo "\n".'<span class="count">';
-//       if (count($this->entries) == 1) {
-//         echo count ($this->entries).' '.__('result');
-//       } else if (count($this->entries) != 0) {
-//         echo count ($this->entries).' '.__('results');
-//       }
-//       echo "</span>\n";
-//     }
-        print_header_layout();
+        TemplateUtility::print_header_layout();
 
         $pred = null;
         foreach ($this->entries as $bib) {
@@ -164,14 +163,13 @@ class SimpleDisplay
             echo $bib->toHTML(true);
 
             $pred = $bib;
-        } // end foreach
+        }
 
-        print_footer_layout();
-    } // end function
+        TemplateUtility::print_footer_layout();
+    }
 
-    public function changeSection($pred, $bib)
+    public function changeSection($pred, $bib): bool
     {
-
         // for the first one we output the header
         if ($pred == null) {
             return true;
@@ -181,7 +179,7 @@ class SimpleDisplay
         return $f($pred, $bib) != 0;
     }
 
-    public function sectionHeader($bib, $pred)
+    public function sectionHeader($bib, $pred): string
     {
         switch (BIBTEXBROWSER_LAYOUT) {
             case 'table':
@@ -195,9 +193,9 @@ class SimpleDisplay
                 if ($pred) {
                     $string .= "</ul>\n";
                 }
-                $year = $bib->hasField(YEAR) ? $bib->getYear() : __('No date');
+
+                $year = $bib->hasField(YEAR) ? $bib->getYear() : InternationalizationUtility::translate('No date');
                 return $string . '<h' . $this->headingLevel . '>' . $year . '</h' . $this->headingLevel . ">\n<ul class=\"result\">\n";
-                break;
             default:
                 return '';
         }

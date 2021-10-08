@@ -11,15 +11,15 @@ class GakoParser
     /**
      * @var mixed[]|\Delimiter[]|mixed
      */
-    public $start_delimiters;
+    public array $start_delimiters;
+
     /**
      * @var mixed[]|\Delimiter[]|mixed
      */
-    public $end_delimiters;
-    /**
-     * @var mixed[]|mixed
-     */
-    public $nonesting;
+    public array $end_delimiters;
+
+    public array $nonesting;
+
     /**
      * @var mixed[]|mixed
      */
@@ -107,6 +107,7 @@ class GakoParser
         foreach ($x as $k) {
             $result[] = preg_quote($k, '/');
         }
+
         return $result;
     }
 
@@ -119,7 +120,7 @@ class GakoParser
     {
         $result = [];
 
-        for ($i = 0; $i < strlen($str); $i++) {
+        for ($i = 0; $i < strlen($str); ++$i) {
             foreach (array_merge($this->get_start_delimiters(), $this->get_end_delimiters()) as $v) {
                 $new_fragment = substr($str, $i, strlen($v));
                 if ($new_fragment === $v) {
@@ -131,6 +132,7 @@ class GakoParser
                 }
             }
         }
+
         //print_r($result);
         return $result;
     }
@@ -200,6 +202,7 @@ class GakoParser
                 if ($pos > $last) {
                     $strings[count($stack)] .= substr($str, $last, $pos - $last);
                 }
+
                 array_unshift($stack, $delim);
                 // init the new stack
                 $strings[count($stack)] = '';
@@ -224,6 +227,7 @@ class GakoParser
         if (method_exists($this->delegate, $method)) {
             $result = $this->delegate->$method($result);
         }
+
         return $result;
     }
 }

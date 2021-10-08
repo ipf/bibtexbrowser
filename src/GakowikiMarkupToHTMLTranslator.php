@@ -28,14 +28,16 @@ class GakowikiMarkupToHTMLTranslator
     public array $references = [];
 
     /** replaces all line breaks by "__newline__" that are meant to replaced back by a call to __post() */
-    public function __pre($str)
+    public function pre($str)
     {
         $result = $str;
 
         // we often use nelines to have pretty HTML code
         // such as in tables
         // however, they are no "real" newlines to be transformed in <br/>
-        $result = preg_replace("/>\s*(\n|\r\n)/", '>__newline__', $result);
+        $result = preg_replace("#>\s*(
+|
+)#", '>__newline__', $result);
         return $result;
     }
 
@@ -52,7 +54,9 @@ class GakowikiMarkupToHTMLTranslator
 
     public function escape_newline($str)
     {
-        return preg_replace("/(\n|\r\n)/", '__newline__', $str);
+        return preg_replace('#(
+|
+)#', '__newline__', $str);
     }
 
     public function toc($str)
@@ -60,10 +64,12 @@ class GakowikiMarkupToHTMLTranslator
         return '+++TOC+++';
     }
 
-    public function __post($str)
+    public function post($str)
     {
         $result = $str;
-        $result = preg_replace("/(\n|\r\n)/", "<br/>\n", $result);
+        $result = preg_replace('#(
+|
+)#', "<br/>\n", $result);
 
         // workaround to support the semantics change in pre mode
         // and the semantics of embedded HTML
@@ -71,7 +77,7 @@ class GakowikiMarkupToHTMLTranslator
 
         // cleaning the additional <br>
         // this is really nice
-        $result = preg_replace("/(<\/h.>)<br\/>/i", '\\1 ', $result);
+        $result = preg_replace("#(<\/h.>)<br\/>#i", '\\1 ', $result);
 
         // adding the table of contents
         $result = str_replace($this->toc(''), implode('<br/>', $this->toc), $result);
@@ -88,6 +94,7 @@ class GakowikiMarkupToHTMLTranslator
                         if ($theref != '') {
                             $result = 'undeterministic citation: ' . $m;
                         }
+
                         $theref = $ref;
                         $result = preg_replace(
                             '/@@@' . preg_quote($m, '/') . '@@@/i',
@@ -100,12 +107,6 @@ class GakowikiMarkupToHTMLTranslator
         }
 
         return $result;
-    }
-
-    /** adds <pre> tags and prevents newline to be replaced by <br/> by __post */
-    public function pre($str)
-    {
-        return '<pre>' . $this->escape_newline($str) . '</pre>';
     }
 
     /** prevents newline to be replaced by <br/> by __post */
@@ -135,6 +136,7 @@ class GakowikiMarkupToHTMLTranslator
                 foreach (explode('&&', $line) as $field) {
                     $result .= '<td>' . $field . '</td>';
                 }
+
                 $result .= '</tr>';
             }
         }
@@ -143,21 +145,21 @@ class GakowikiMarkupToHTMLTranslator
     }
 
 
-    public function __create_anchor($m)
+    public function create_anchor($m)
     {
-        return preg_replace('/[^a-zA-Z]/', '', $m);
+        return preg_replace('#[^a-zA-Z]#', '', $m);
     }
 
     public function h2($str)
     {
-        $tag = $this->__create_anchor($str);
+        $tag = $this->create_anchor($str);
         $this->toc[] = '<a href="#' . $tag . '">' . $str . '</a>';
         return '<a name="' . $tag . '"></a>' . '<h2>' . $str . '</h2>';
     }
 
     public function h3($str)
     {
-        $tag = $this->__create_anchor($str);
+        $tag = $this->create_anchor($str);
         $this->toc[] = '&nbsp;&nbsp;<a href="#' . $tag . '">' . $str . '</a>';
         return '<a name="' . $tag . '"></a>' . '<h3>' . $str . '</h3>';
     }
@@ -169,7 +171,7 @@ class GakowikiMarkupToHTMLTranslator
 
     public function link($str)
     {
-        if (preg_match('/(.*)\|(.*)/', $str, $matches)) {
+        if (preg_match('#(.*)\|(.*)#', $str, $matches)) {
             $rawurl = $matches[1];
             $text = $matches[2];
         } else {
@@ -179,7 +181,7 @@ class GakowikiMarkupToHTMLTranslator
 
         $url = $rawurl;
 
-        if (!preg_match('/(#|^http|^mailto)/', $rawurl)) {
+        if (!preg_match('#(\#|^http|^mailto)#', $rawurl)) {
             $url = function_exists('logical2url') ? logical2url($rawurl) : $rawurl;
         }
 
@@ -239,4 +241,6 @@ class GakowikiMarkupToHTMLTranslator
     {
         return '';
     }
-} // end class
+}
+
+ // end class

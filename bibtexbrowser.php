@@ -14,6 +14,11 @@ published by the Free Software Foundation; either version 2 of the
 License, or (at your option) any later version.
 
 */
+
+use BibtexBrowser\BibtexBrowser\BibEntry;
+use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
+use BibtexBrowser\BibtexBrowser\Utility\TemplateUtility;
+
 require(__DIR__ . '/vendor/autoload.php');
 
 // it is be possible to include( 'bibtexbrowser.php' ); several times in the same script
@@ -36,15 +41,20 @@ if (!defined('BIBTEXBROWSER')) {
         }
     }
 
+    /**
+     * @throws Exception
+     */
     function bibtexbrowser_configuration($key)
     {
         global $CONFIGURATION;
         if (isset($CONFIGURATION[$key])) {
             return $CONFIGURATION[$key];
         }
+
         if (defined($key)) {
             return constant($key);
         }
+
         throw new Exception('no such configuration parameter: ' . $key);
     }
 
@@ -62,7 +72,7 @@ if (!defined('BIBTEXBROWSER')) {
     // the changes that require existing bibtexbrowser symbols should be in bibtexbrowser.after.php (included at the end of this file)
     // per bibtex file configuration
     @include(__DIR__ . '/bibtexbrowser.local.php');
-    @include(preg_replace('/\.php$/', '.local.php', __FILE__));
+    @include(preg_replace('#\.php$#', '.local.php', __FILE__));
 
     // the encoding of your bibtex file
     @define(
@@ -79,7 +89,7 @@ if (!defined('BIBTEXBROWSER')) {
 
     // number of bib items per page
     // we use the same parameter 'num' as Google
-    @define('PAGE_SIZE', isset($_GET['num']) ? (preg_match('/^\d+$/', $_GET['num']) ? $_GET['num'] : 10000) : 14);
+    @define('PAGE_SIZE', isset($_GET['num']) ? (preg_match('#^\d+$#', $_GET['num']) ? $_GET['num'] : 10000) : 14);
 
     // bibtexbrowser uses a small piece of Javascript to improve the user experience
     // see http://en.wikipedia.org/wiki/Progressive_enhancement
@@ -289,13 +299,16 @@ if (!defined('BIBTEXBROWSER')) {
         if (isset($CONFIGURATION[$key])) {
             return $CONFIGURATION[$key];
         }
+
         if (defined($key)) {
             return constant($key);
         }
+
         die('no such configuration: ' . $key);
     }
 
-    /** parses $_GET[Q_FILE] and puts the result (an object of type BibDataBase) in $_GET[Q_DB].
+    /**
+     * parses $_GET[Q_FILE] and puts the result (an object of type BibDataBase) in $_GET[Q_DB].
      * See also zetDB().
      */
     function setDB()
@@ -305,12 +318,13 @@ if (!defined('BIBTEXBROWSER')) {
         return $updated;
     }
 
-    /** parses the $bibtex_filenames (usually semi-column separated) and returns an object of type BibDataBase.
+    /**
+     * parses the $bibtex_filenames (usually semi-column separated) and returns an object of type BibDataBase.
      * See also setDB()
      */
     function zetDB($bibtex_filenames)
     {
-        list($db, $parsed, $updated, $saved) = _zetDB($bibtex_filenames);
+        [$db, $parsed, $updated, $saved] = _zetDB($bibtex_filenames);
         return $db;
     }
 
@@ -329,11 +343,14 @@ if (!defined('BIBTEXBROWSER')) {
         $url = '?bib=' . $bibfile;
         echo '<a href="' . $url . '" rel="nofollow">' . $bibfile . '</a><br/>';
     }
+
         echo '</div>';
     }
 
-    /** returns the target of links */
-    function get_target()
+    /**
+     * returns the target of links
+     */
+    function get_target(): string
     {
         if (c('BIBTEXBROWSER_LINKS_TARGET') !== '_self') {
             return ' target="' . c('BIBTEXBROWSER_LINKS_TARGET') . '"';
@@ -343,12 +360,12 @@ if (!defined('BIBTEXBROWSER')) {
     }
 
     /** @nodoc */
-    function _zetDB($bibtex_filenames)
+    function _zetDB(?string $bibtex_filenames)
     {
         $db = null;
 
         // default bib file, if no file is specified in the query string.
-        if (!isset($bibtex_filenames) || $bibtex_filenames == '') {
+        if (!isset($bibtex_filenames) || $bibtex_filenames === '') {
             default_message();
             exit;
         }
@@ -371,7 +388,7 @@ if (!defined('BIBTEXBROWSER')) {
                 $escapedBib = htmlEntities($bib, ENT_QUOTES);
                 die('<b>the bib file ' . $escapedBib . ' does not exist !</b>');
             }
-        } // end for each
+        }
 
         // ---------------------------- HANDLING HTTP If-modified-since
         // testing with $ curl -v --header "If-Modified-Since: Fri, 23 Oct 2010 19:22:47 GMT" "... bibtexbrowser.php?key=wasylkowski07&bib=..%252Fstrings.bib%253B..%252Fentries.bib"
@@ -384,7 +401,8 @@ if (!defined('BIBTEXBROWSER')) {
             $bib_is_unmodified =
                 $bib_is_unmodified
                 && (strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) > filemtime($bib));
-        } // end for each
+        }
+
         if ($bib_is_unmodified && !headers_sent()) {
             header('HTTP/1.1 304 Not Modified');
             exit;
@@ -413,6 +431,7 @@ if (!defined('BIBTEXBROWSER')) {
             } else {
                 die('could not get the lock');
             }
+
             fclose($f);
             // basic test
             // do we have an correct version of the file
@@ -421,6 +440,7 @@ if (!defined('BIBTEXBROWSER')) {
                 if (BIBTEXBROWSER_DEBUG) {
                     die('$db not a BibDataBase. please reload.');
                 }
+
                 $parse = true;
             }
         } else {
@@ -429,7 +449,6 @@ if (!defined('BIBTEXBROWSER')) {
 
         // we don't have a compiled version
         if ($parse) {
-            //echo '<!-- parsing -->';
             // then parsing the file
             $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
             foreach (explode(MULTIPLE_BIB_SEPARATOR, $bibtex_filenames) as $bib) {
@@ -468,259 +487,45 @@ if (!defined('BIBTEXBROWSER')) {
             } else {
                 die('could not get the lock');
             }
-            fclose($f);
-        } // end saving the cached verions
 
+            fclose($f);
+        }
 
         return [$db, $parse, $updated, $saved];
-    } // end function setDB
-
-    // internationalization
-    if (!function_exists('__')) {
-        function __($msg)
-        {
-            global $BIBTEXBROWSER_LANG;
-            if (isset($BIBTEXBROWSER_LANG[$msg])) {
-                return $BIBTEXBROWSER_LANG[$msg];
-            }
-            return $msg;
-        }
-    }
-
-    /** is an extended version of the trim function, removes linebreaks, tabs, etc.
-     */
-    function xtrim($line)
-    {
-        $line = trim($line);
-        // we remove the unneeded line breaks
-        // this is *required* to correctly split author lists into names
-        // 2010-06-30
-        // bug found by Thomas
-        // windows new line is **\r\n"** and not the other way around!!
-        // according to php.net: Proncess \r\n's first so they aren't converted twice
-        $line = str_replace(["\r\n", "\r", "\n", "\t"], ' ', $line);
-        // remove superfluous spaces e.g. John+++Bar
-        $line = preg_replace('/ {2,}/', ' ', $line);
-        return $line;
-    }
-
-    /** encapsulates the conversion of a single latex chars to the corresponding HTML entity.
-     * It expects a **lower-case** char.
-     */
-    function char2html($line, $latexmodifier, $char, $entitiyfragment)
-    {
-        $line = char2html_case_sensitive($line, $latexmodifier, strtoupper($char), $entitiyfragment);
-        return char2html_case_sensitive($line, $latexmodifier, strtolower($char), $entitiyfragment);
-    }
-
-    function char2html_case_sensitive($line, $latexmodifier, $char, $entitiyfragment)
-    {
-        return preg_replace(
-            '/\\{?\\\\' . preg_quote($latexmodifier, '/') . ' ?\\{?' . $char . '\\}?/',
-            '&' . $char . '' . $entitiyfragment . ';',
-            $line
-        );
-    }
-
-    /** converts latex chars to HTML entities.
-     * (I still look for a comprehensive translation table from late chars to html, better than [[http://isdc.unige.ch/Newsletter/help.html]])
-     */
-    function latex2html($line, $do_clean_extra_bracket = true)
-    {
-        $line = preg_replace('/([^\\\\])~/', '\\1&nbsp;', $line);
-
-        $line = str_replace(['---', '--', '``', "''"], ['&mdash;', '&ndash;', '"', '"'], $line);
-
-        // performance increases with this test
-        // bug found by Serge Barral: what happens if we have curly braces only (typically to ensure case in Latex)
-        // added && strpos($line,'{')===false
-        if (strpos($line, '\\') === false && strpos($line, '{') === false) {
-            return $line;
-        }
-
-        $maths = [];
-        $index = 0;
-        // first we escape the math env
-        preg_match_all('/\$.*?\$/', $line, $matches);
-        foreach ($matches[0] as $k) {
-            $maths[] = $k;
-            $line = str_replace($k, '__MATH' . $index . '__', $line);
-            $index++;
-        }
-
-        // we should better replace this before the others
-        // in order not to mix with the HTML entities coming after (just in case)
-        $line = str_replace(['\\&', '\_', '\%'], ['&amp;', '_', '%'], $line);
-
-        // handling \url{....}
-        // often used in howpublished for @misc
-        $line = preg_replace('/\\\\url\{(.*)\}/U', '<a href="\\1">\\1</a>', $line);
-
-        // Friday, April 01 2011
-        // added support for accented i
-        // for instance \`\i
-        // see http://en.wikibooks.org/wiki/LaTeX/Accents
-        // " the letters "i" and "j" require special treatment when they are given accents because it is often desirable to replace the dot with the accent. For this purpose, the commands \i and \j can be used to produce dotless letters."
-        $line = preg_replace('/\\\\([ij])/i', '\\1', $line);
-
-
-        $line = char2html($line, "'", 'a', 'acute');
-        $line = char2html($line, "'", 'c', 'acute');
-        $line = char2html($line, "'", 'e', 'acute');
-        $line = char2html($line, "'", 'i', 'acute');
-        $line = char2html($line, "'", 'o', 'acute');
-        $line = char2html($line, "'", 'u', 'acute');
-        $line = char2html($line, "'", 'y', 'acute');
-        $line = char2html($line, "'", 'n', 'acute');
-
-        $line = char2html($line, '`', 'a', 'grave');
-        $line = char2html($line, '`', 'e', 'grave');
-        $line = char2html($line, '`', 'i', 'grave');
-        $line = char2html($line, '`', 'o', 'grave');
-        $line = char2html($line, '`', 'u', 'grave');
-
-        $line = char2html($line, '~', 'a', 'tilde');
-        $line = char2html($line, '~', 'n', 'tilde');
-        $line = char2html($line, '~', 'o', 'tilde');
-
-        $line = char2html($line, '"', 'a', 'uml');
-        $line = char2html($line, '"', 'e', 'uml');
-        $line = char2html($line, '"', 'i', 'uml');
-        $line = char2html($line, '"', 'o', 'uml');
-        $line = char2html($line, '"', 'u', 'uml');
-        $line = char2html($line, '"', 'y', 'uml');
-        $line = char2html($line, '"', 's', 'zlig');
-
-        $line = char2html($line, '^', 'a', 'circ');
-        $line = char2html($line, '^', 'e', 'circ');
-        $line = char2html($line, '^', 'i', 'circ');
-        $line = char2html($line, '^', 'o', 'circ');
-        $line = char2html($line, '^', 'u', 'circ');
-
-        $line = char2html($line, 'r', 'a', 'ring');
-
-        $line = char2html($line, 'c', 'c', 'cedil');
-        $line = char2html($line, 'c', 's', 'cedil');
-        $line = char2html($line, 'v', 's', 'caron');
-
-        $line = str_replace([
-            '\\ss',
-            '\\o',
-            '\\O',
-            '\\aa',
-            '\\AA',
-            '\\l',
-            '\\L',
-            '\\k{a}',
-            '\\\'{c}',
-            '\\v{c}',
-            '\\v{C}',
-            '\\ae'
-        ], [
-            '&szlig;',
-            '&oslash;',
-            '&Oslash;',
-            '&aring;',
-            '&Aring;',
-            '&#322',
-            '&#321',
-            '&#261',
-            '&#263',
-            '&#269',
-            '&#268',
-            '&aelig;'
-        ], $line);
-
-        // handling \textsuperscript{....} FAILS if there still are nested {}
-        $line = preg_replace('/\\\\textsuperscript\{(.*)\}/U', '<sup>\\1</sup>', $line);
-
-        // handling \textsubscript{....} FAILS if there still are nested {}
-        $line = preg_replace('/\\\\textsubscript\{(.*)\}/U', '<sub>\\1</sub>', $line);
-
-        if ($do_clean_extra_bracket) {
-            // clean extra tex curly brackets, usually used for preserving capitals
-            // must come before the final math replacement
-            $line = str_replace(['}', '{'], '', $line);
-        }
-
-        // we restore the math env
-        foreach ($maths as $i => $math) {
-            $line = str_replace('__MATH' . $i . '__', $math, $line);
-        }
-
-        return $line;
-    }
-
-    /** encodes strings for Z3988 URLs. Note that & are encoded as %26 and not as &amp. */
-    function s3988($s): string
-    {
-        // first remove the HTML entities (e.g. &eacute;) then urlencode them
-        return urlencode($s);
     }
 
     /**
-     * see BibEntry->formatAuthor($author)
-     * @deprecated
-     * @nodoc
-     */
-    function formatAuthor()
-    {
-        die('Sorry, this function does not exist anymore, however, you can simply use $bibentry->formatAuthor($author) instead.');
-    }
-
-    /** returns an HTML tag depending on BIBTEXBROWSER_LAYOUT e.g. <TABLE> */
-    function get_HTML_tag_for_layout()
-    {
-        switch (BIBTEXBROWSER_LAYOUT) { /* switch for different layouts */
-            case 'list':
-                $tag = 'ul';
-                break;
-            case 'ordered_list':
-                $tag = 'ol';
-                break;
-            case 'table':
-                $tag = 'table';
-                break;
-            case 'definition':
-                $tag = 'div';
-                break;
-            default:
-                die('Unknown BIBTEXBROWSER_LAYOUT');
-        }
-        return $tag;
-    }
-
-    /** returns a collection of links for the given bibtex entry
+     * returns a collection of links for the given bibtex entry
      *  e.g. [bibtex] [doi][pdf]
      */
-    function bib2links_default($bibentry): string
+    function bib2links_default(BibEntry $bibentry): string
     {
         $links = [];
 
         if (BIBTEXBROWSER_BIBTEX_LINKS) {
             $link = $bibentry->getBibLink();
-            if ($link != '') {
+            if ($link !== '') {
                 $links[] = $link;
             };
         }
 
         if (BIBTEXBROWSER_PDF_LINKS) {
             $link = $bibentry->getUrlLink();
-            if ($link != '') {
+            if ($link !== '') {
                 $links[] = $link;
             };
         }
 
         if (BIBTEXBROWSER_DOI_LINKS) {
             $link = $bibentry->getDoiLink();
-            if ($link != '') {
+            if ($link !== '') {
                 $links[] = $link;
             };
         }
 
         if (BIBTEXBROWSER_GSID_LINKS) {
             $link = $bibentry->getGSLink();
-            if ($link != '') {
+            if ($link !== '') {
                 $links[] = $link;
             };
         }
@@ -729,78 +534,76 @@ if (!defined('BIBTEXBROWSER')) {
     }
 
 
-    /** prints the header of a layouted HTML, depending on BIBTEXBROWSER_LAYOUT e.g. <TABLE> */
-    function print_header_layout()
-    {
-        if (BIBTEXBROWSER_LAYOUT === 'list') {
-            return;
-        }
-        echo '<' . get_HTML_tag_for_layout() . ' class="result">' . "\n";
-    }
-
-    /** prints the footer of a layouted HTML, depending on BIBTEXBROWSER_LAYOUT e.g. </TABLE> */
-    function print_footer_layout()
-    {
-        echo '</' . get_HTML_tag_for_layout() . '>';
-    }
-
-    /** this function encapsulates the user-defined name for bib to HTML*/
+    /**
+     * this function encapsulates the user-defined name for bib to HTML
+     */
     function bib2html($bibentry)
     {
         $function = bibtexbrowser_configuration('BIBLIOGRAPHYSTYLE');
         return $function($bibentry);
     }
 
-    /** this function encapsulates the user-defined name for bib2links */
+    /**
+     * this function encapsulates the user-defined name for bib2links
+     */
     function bib2links($bibentry)
     {
         $function = c('BIBTEXBROWSER_LINK_STYLE');
         return $function($bibentry);
     }
 
-    /** encapsulates the user-defined sections. @nodoc */
+    /**
+     * encapsulates the user-defined sections. @nodoc
+     */
     function _DefaultBibliographySections()
     {
         $function = BIBLIOGRAPHYSECTIONS;
         return $function();
     }
 
-    /** encapsulates the user-defined sections. @nodoc */
+    /**
+     * encapsulates the user-defined sections. @nodoc
+     */
     function _DefaultBibliographyTitle($query)
     {
         $function = BIBLIOGRAPHYTITLE;
         return $function($query);
     }
 
-    function DefaultBibliographyTitle($query)
+    function DefaultBibliographyTitle(array $query): string
     {
         $result = 'Publications in ' . $_GET[Q_FILE];
         if (isset($query['all'])) {
             unset($query['all']);
         }
-        if (count($query) > 0) {
+
+        if ($query !== []) {
             $result .= ' - ' . query2title($query);
         }
+
         return $result;
     }
 
-    /** compares two instances of BibEntry by modification time
+    /**
+     * compares two instances of BibEntry by modification time
      */
-    function compare_bib_entry_by_mtime($a, $b)
+    function compare_bib_entry_by_mtime(BibEntry $a, BibEntry $b)
     {
         return -($a->getTimestamp() - $b->getTimestamp());
     }
 
-    /** compares two instances of BibEntry by order in Bibtex file
+    /**
+     * compares two instances of BibEntry by order in Bibtex file
      */
-    function compare_bib_entry_by_bibtex_order($a, $b)
+    function compare_bib_entry_by_bibtex_order(BibEntry $a, BibEntry $b): int
     {
         return $a->order - $b->order;
     }
 
-    /** compares two instances of BibEntry by year
+    /**
+     * compares two instances of BibEntry by year
      */
-    function compare_bib_entry_by_year($a, $b): int
+    function compare_bib_entry_by_year(BibEntry $a, BibEntry $b): int
     {
         $yearA = (int)$a->getYear(); // 0 if no year
         $yearB = (int)$b->getYear();
@@ -848,30 +651,33 @@ if (!defined('BIBTEXBROWSER')) {
         return 1;
     }
 
-    /** compares two instances of BibEntry by title
+    /**
+     * compares two instances of BibEntry by title
      */
-    function compare_bib_entry_by_title($a, $b)
+    function compare_bib_entry_by_title(BibEntry $a, BibEntry $b): int
     {
         return strcmp($a->getTitle(), $b->getTitle());
     }
 
-    /** compares two instances of BibEntry by undecorated Abbrv
+    /**
+     * compares two instances of BibEntry by undecorated Abbrv
      */
-    function compare_bib_entry_by_raw_abbrv($a, $b)
+    function compare_bib_entry_by_raw_abbrv(BibEntry $a, BibEntry $b): int
     {
         return strcmp($a->getRawAbbrv(), $b->getRawAbbrv());
     }
 
-    /** compares two instances of BibEntry by author or editor
+    /**
+     * compares two instances of BibEntry by author or editor
      */
-    function compare_bib_entry_by_name($a, $b)
+    function compare_bib_entry_by_name(BibEntry $a, BibEntry $b): int
     {
         if ($a->hasField(AUTHOR)) {
             $namesA = $a->getAuthor();
         } elseif ($a->hasField(EDITOR)) {
             $namesA = $a->getField(EDITOR);
         } else {
-            $namesA = __('No author');
+            $namesA = InternationalizationUtility::translate('No author');
         }
 
         if ($b->hasField(AUTHOR)) {
@@ -879,7 +685,7 @@ if (!defined('BIBTEXBROWSER')) {
         } elseif ($b->hasField(EDITOR)) {
             $namesB = $b->getField(EDITOR);
         } else {
-            $namesB = __('No author');
+            $namesB = InternationalizationUtility::translate('No author');
         }
 
         return strcmp($namesA, $namesB);
@@ -888,11 +694,8 @@ if (!defined('BIBTEXBROWSER')) {
     /** compares two instances of BibEntry by month
      * @author Jan Geldmacher
      */
-    function compare_bib_entry_by_month($a, $b)
+    function compare_bib_entry_by_month(BibEntry $a, BibEntry $b)
     {
-        // this was the old behavior
-        // return strcmp($a->getKey(),$b->getKey());
-
         //bibkey which is used for sorting
         $sort_key = 'month';
         //desired order of values
@@ -923,7 +726,6 @@ if (!defined('BIBTEXBROWSER')) {
         ];
         //order: 1=as specified in $sort_order_values  or -1=reversed
         $order = -1;
-
 
         //first check if the search key exists
         if (!array_key_exists($sort_key, $a->fields) && !array_key_exists($sort_key, $b->fields)) {
@@ -957,39 +759,39 @@ if (!defined('BIBTEXBROWSER')) {
     }
 
     /** is the default sectioning for AcademicDisplay (books, articles, proceedings, etc. ) */
-    function DefaultBibliographySections()
+    function DefaultBibliographySections(): array
     {
         return
             [
                 // Books
                 [
                     'query' => [Q_TYPE => 'book|proceedings'],
-                    'title' => __('Books')
+                    'title' => InternationalizationUtility::translate('Books')
                 ],
                 // Book chapters
                 [
                     'query' => [Q_TYPE => 'incollection|inbook'],
-                    'title' => __('Book Chapters')
+                    'title' => InternationalizationUtility::translate('Book Chapters')
                 ],
                 // Journal / Bookchapters
                 [
                     'query' => [Q_TYPE => 'article'],
-                    'title' => __('Refereed Articles')
+                    'title' => InternationalizationUtility::translate('Refereed Articles')
                 ],
                 // conference papers
                 [
                     'query' => [Q_TYPE => 'inproceedings|conference', Q_EXCLUDE => 'workshop'],
-                    'title' => __('Refereed Conference Papers')
+                    'title' => InternationalizationUtility::translate('Refereed Conference Papers')
                 ],
                 // workshop papers
                 [
                     'query' => [Q_TYPE => 'inproceedings', Q_SEARCH => 'workshop'],
-                    'title' => __('Refereed Workshop Papers')
+                    'title' => InternationalizationUtility::translate('Refereed Workshop Papers')
                 ],
                 // misc and thesis
                 [
                     'query' => [Q_TYPE => 'misc|phdthesis|mastersthesis|bachelorsthesis|techreport'],
-                    'title' => __('Other Publications')
+                    'title' => InternationalizationUtility::translate('Other Publications')
                 ]
             ];
     }
@@ -1003,9 +805,9 @@ if (!defined('BIBTEXBROWSER')) {
      * .bibauthor { }
      * .bibpublisher { }
      *
-     * See http://schema.org/ScholarlyArticle for the metadata
+     * See https://schema.org/ScholarlyArticle for the metadata
      */
-    function DefaultBibliographyStyle($bibentry)
+    function DefaultBibliographyStyle(BibEntry $bibentry): string
     {
         $title = $bibentry->getTitle();
         $type = $bibentry->getType();
@@ -1020,7 +822,6 @@ if (!defined('BIBTEXBROWSER')) {
             $title = ' <a' . get_target() . ' href="' . $bibentry->getField('url') . '">' . $title . '</a>';
         }
 
-
         $coreInfo = $title;
 
         // adding author info
@@ -1031,6 +832,7 @@ if (!defined('BIBTEXBROWSER')) {
             foreach ($bibentry->getFormattedAuthorsArray() as $a) {
                 $authors[] = '<span itemprop="author" itemtype="http://schema.org/Person">' . $a . '</span>';
             }
+
             $coreInfo .= $bibentry->implodeAuthors($authors);
 
             $coreInfo .= '</span>)';
@@ -1042,16 +844,19 @@ if (!defined('BIBTEXBROWSER')) {
         // now the book title
         $booktitle = '';
         if ($type === 'inproceedings') {
-            $booktitle = __('In') . ' ' . '<span itemprop="isPartOf">' . $bibentry->getField(BOOKTITLE) . '</span>';
+            $booktitle = InternationalizationUtility::translate('In') . ' ' . '<span itemprop="isPartOf">' . $bibentry->getField(BOOKTITLE) . '</span>';
         }
+
         if ($type === 'incollection') {
-            $booktitle = __('Chapter in') . ' ' . '<span itemprop="isPartOf">' . $bibentry->getField(BOOKTITLE) . '</span>';
+            $booktitle = InternationalizationUtility::translate('Chapter in') . ' ' . '<span itemprop="isPartOf">' . $bibentry->getField(BOOKTITLE) . '</span>';
         }
+
         if ($type === 'inbook') {
-            $booktitle = __('Chapter in') . ' ' . $bibentry->getField('chapter');
+            $booktitle = InternationalizationUtility::translate('Chapter in') . ' ' . $bibentry->getField('chapter');
         }
+
         if ($type === 'article') {
-            $booktitle = __('In') . ' ' . '<span itemprop="isPartOf">' . $bibentry->getField('journal') . '</span>';
+            $booktitle = InternationalizationUtility::translate('In') . ' ' . '<span itemprop="isPartOf">' . $bibentry->getField('journal') . '</span>';
         }
 
         //// we may add the editor names to the booktitle
@@ -1059,9 +864,11 @@ if (!defined('BIBTEXBROWSER')) {
         if ($bibentry->hasField(EDITOR)) {
             $editor = $bibentry->getFormattedEditors();
         }
+
         if ($editor != '') {
             $booktitle .= ' (' . $editor . ')';
         }
+
         // end editor section
 
         // is the booktitle available
@@ -1072,19 +879,23 @@ if (!defined('BIBTEXBROWSER')) {
 
         $publisher = '';
         if ($type === 'phdthesis') {
-            $publisher = __('PhD thesis') . ', ' . $bibentry->getField(SCHOOL);
+            $publisher = InternationalizationUtility::translate('PhD thesis') . ', ' . $bibentry->getField(SCHOOL);
         }
+
         if ($type === 'mastersthesis') {
-            $publisher = __('Master\'s thesis') . ', ' . $bibentry->getField(SCHOOL);
+            $publisher = InternationalizationUtility::translate("Master's thesis") . ', ' . $bibentry->getField(SCHOOL);
         }
+
         if ($type === 'bachelorsthesis') {
-            $publisher = __('Bachelor\'s thesis') . ', ' . $bibentry->getField(SCHOOL);
+            $publisher = InternationalizationUtility::translate("Bachelor's thesis") . ', ' . $bibentry->getField(SCHOOL);
         }
+
         if ($type === 'techreport') {
-            $publisher = __('Technical report');
+            $publisher = InternationalizationUtility::translate('Technical report');
             if ($bibentry->hasField('number')) {
                 $publisher .= ' ' . $bibentry->getField('number');
             }
+
             $publisher .= ', ' . $bibentry->getField('institution');
         }
 
@@ -1102,7 +913,7 @@ if (!defined('BIBTEXBROWSER')) {
 
 
         if ($bibentry->hasField('volume')) {
-            $entry[] = __('volume') . ' ' . $bibentry->getField('volume');
+            $entry[] = InternationalizationUtility::translate('volume') . ' ' . $bibentry->getField('volume');
         }
 
 
@@ -1126,7 +937,7 @@ if (!defined('BIBTEXBROWSER')) {
      * @define('BIBLIOGRAPHYSTYLE','JanosBibliographyStyle');
      * </pre>
      */
-    function JanosBibliographyStyle($bibentry): string
+    function JanosBibliographyStyle(BibEntry $bibentry): string
     {
         $title = $bibentry->getTitle();
         $type = $bibentry->getType();
@@ -1143,6 +954,7 @@ if (!defined('BIBTEXBROWSER')) {
         if ($bibentry->hasField('url')) {
             $title = ' <a' . get_target() . ' href="' . $bibentry->getField('url') . '">' . $title . '</a>';
         }
+
         $entry[] = $title;
 
 
@@ -1176,6 +988,7 @@ if (!defined('BIBTEXBROWSER')) {
             if ($editor != '') {
                 $booktitle .= ' (' . $editor . ')';
             }
+
             $entry[] = '<i>' . $booktitle . '</i>';
         }
 
@@ -1185,8 +998,9 @@ if (!defined('BIBTEXBROWSER')) {
         }
 
         if ($type === 'mastersthesis') {
-            $publisher = 'Master\'s thesis, ' . $bibentry->getField(SCHOOL);
+            $publisher = "Master's thesis, " . $bibentry->getField(SCHOOL);
         }
+
         if ($type === 'techreport') {
             $publisher = 'Technical report, ';
             $publisher .= $bibentry->getField('institution');
@@ -1194,6 +1008,7 @@ if (!defined('BIBTEXBROWSER')) {
                 $publisher .= ' ' . $bibentry->getField('number');
             }
         }
+
         if ($bibentry->hasField('publisher')) {
             $publisher = $bibentry->getField('publisher');
         }
@@ -1206,6 +1021,7 @@ if (!defined('BIBTEXBROWSER')) {
             if ($bibentry->hasField('volume')) {
                 $entry[] = 'vol. ' . $bibentry->getField('volume');
             }
+
             if ($bibentry->hasField('number')) {
                 $entry[] = 'no. ' . $bibentry->getField('number');
             }
@@ -1247,8 +1063,7 @@ if (!defined('BIBTEXBROWSER')) {
      * @define('USE_INITIALS_FOR_NAMES',true);
      * </pre>
      */
-
-    function VancouverBibliographyStyle($bibentry)
+    function VancouverBibliographyStyle(BibEntry $bibentry): string
     {
         $title = $bibentry->getTitle();
         $type = $bibentry->getType();
@@ -1261,11 +1076,12 @@ if (!defined('BIBTEXBROWSER')) {
         }
 
         // Ensure punctuation mark at title's end
-        if (strlen(rtrim($title)) > 0 && strpos(':.;,?!', substr(rtrim($title), -1)) > 0) {
+        if (rtrim($title) !== '' && strpos(':.;,?!', substr(rtrim($title), -1)) > 0) {
             $title .= ' ';
         } else {
             $title .= '. ';
         }
+
         if ($bibentry->hasField('url')) {
             $title = ' <a' . get_target() . ' href="' . $bibentry->getField('url') . '">' . $title . '</a>';
         }
@@ -1286,14 +1102,16 @@ if (!defined('BIBTEXBROWSER')) {
             $booktitle = 'In: ' . $editor . $bibentry->getField(BOOKTITLE);
         } elseif ($type === 'incollection') {
             $booktitle = 'Chapter in ';
-            if ($editor != '') {
+            if ($editor !== '') {
                 $booktitle .= $editor;
             }
+
             $booktitle .= $bibentry->getField(BOOKTITLE);
         } elseif ($type === 'article') {
             $booktitle = $bibentry->getField('journal');
         }
-        if ($booktitle != '') {
+
+        if ($booktitle !== '') {
             $entry[] = $booktitle . '. ';
         }
 
@@ -1302,17 +1120,20 @@ if (!defined('BIBTEXBROWSER')) {
         if ($type === 'phdthesis') {
             $publisher = 'PhD thesis, ' . $bibentry->getField(SCHOOL);
         } elseif ($type === 'mastersthesis') {
-            $publisher = 'Master\'s thesis, ' . $bibentry->getField(SCHOOL);
+            $publisher = "Master's thesis, " . $bibentry->getField(SCHOOL);
         } elseif ($type === 'techreport') {
             $publisher = 'Technical report, ' . $bibentry->getField('institution');
         }
+
         if ($bibentry->hasField('publisher')) {
             $publisher = $bibentry->getField('publisher');
         }
-        if ($publisher != '') {
+
+        if ($publisher !== '') {
             if ($bibentry->hasField('address')) {
                 $entry[] = $bibentry->getField('address') . ': ';
             }
+
             $entry[] = $publisher . '; ';
         }
 
@@ -1324,6 +1145,7 @@ if (!defined('BIBTEXBROWSER')) {
         if ($bibentry->hasField('volume')) {
             $entry[] = ';' . $bibentry->getField('volume');
         }
+
         if ($bibentry->hasField('number')) {
             $entry[] = '(' . $bibentry->getField('number') . ')';
         }
@@ -1332,7 +1154,7 @@ if (!defined('BIBTEXBROWSER')) {
             $entry[] = str_replace('--', '-', ':' . $bibentry->getField('pages'));
         }
 
-        $result = implode($entry) . '.';
+        $result = implode('', $entry) . '.';
 
         // some comments (e.g. acceptance rate)?
         if ($bibentry->hasField('comment')) {
@@ -1352,20 +1174,20 @@ if (!defined('BIBTEXBROWSER')) {
     /** orders two BibEntry as defined by ORDER_FUNCTION
      * (by default compares two instances of BibEntry by year and then month)
      */
-    function compare_bib_entries($bib1, $bib2)
+    function compare_bib_entries(BibEntry $bib1, BibEntry $bib2)
     {
-        $f1 = ORDER_FUNCTION;
-        $cmp = $f1($bib1, $bib2);
-        if ($cmp == 0) {
-            $f2 = ORDER_FUNCTION_FINE;
-            $cmp = $f2($bib1, $bib2);
+        $cmp = compare_bib_entry_by_year($bib1, $bib2);
+        if ($cmp === 0) {
+            $cmp = compare_bib_entry_by_month($bib1, $bib2);
         }
+
         return $cmp;
     }
 
-    /** creates a query string given an array of parameter, with all specifities of bibtexbrowser_ (such as adding the bibtex file name &bib=foo.bib
+    /**
+     * creates a query string given an array of parameter, with all specifities of bibtexbrowser_ (such as adding the bibtex file name &bib=foo.bib
      */
-    function createQueryString($array_param)
+    function createQueryString(array $array_param): string
     {
         // then a simple transformation and implode
         foreach ($array_param as $key => $val) {
@@ -1373,15 +1195,19 @@ if (!defined('BIBTEXBROWSER')) {
             if ($key == Q_INNER_AUTHOR) {
                 $key = Q_AUTHOR;
             }
-            if ($key === \BibtexBrowser\BibtexBrowser\BibEntry::Q_INNER_TYPE) {
+
+            if ($key === BibEntry::Q_INNER_TYPE) {
                 $key = Q_TYPE;
             }
+
             if ($key == Q_KEYS) {
                 $val = urlencode(json_encode($val));
             }
+
             if ($key == Q_INNER_KEYS_INDEX) {
                 continue;
             }
+
             $array_param[$key] = $key . '=' . urlencode($val);
         }
 
@@ -1394,11 +1220,12 @@ if (!defined('BIBTEXBROWSER')) {
         return implode('&amp;', $array_param);
     }
 
-    /** returns a href string of the form: href="?bib=testing.bib&search=JML.
+    /**
+     * returns a href string of the form: href="?bib=testing.bib&search=JML.
      * Based on createQueryString.
      * @nodoc
      */
-    function makeHref($query = null)
+    function makeHref(?array $query = null): string
     {
         return 'href="' . bibtexbrowser_configuration('BIBTEXBROWSER_URL') . '?' . createQueryString($query) . '"';
     }
@@ -1407,7 +1234,7 @@ if (!defined('BIBTEXBROWSER')) {
     /** returns the splitted name of an author name as an array. The argument is assumed to be
      * "FirstName LastName" or "LastName, FirstName".
      */
-    function splitFullName($author)
+    function splitFullName(string $author): array
     {
         $author = trim($author);
         // the author format is "Joe Dupont"
@@ -1423,12 +1250,13 @@ if (!defined('BIBTEXBROWSER')) {
             $lastname = str_replace(',', '', array_shift($parts));
             $firstname = implode(' ', $parts);
         }
+
         return [trim($firstname), trim($lastname)];
     }
 
     if (!function_exists('poweredby')) {
         /** Returns the powered by part. @nodoc */
-        function poweredby()
+        function poweredby(): string
         {
             $poweredby = "\n" . '<div style="text-align:right;font-size: xx-small;opacity: 0.6;" class="poweredby">';
             $poweredby .= '<!-- If you like bibtexbrowser, thanks to keep the link :-) -->';
@@ -1439,59 +1267,11 @@ if (!defined('BIBTEXBROWSER')) {
     }
 
     if (!function_exists('bibtexbrowser_top_banner')) {
-        function bibtexbrowser_top_banner()
+        function bibtexbrowser_top_banner(): string
         {
             return '';
         }
     }
-
-    /** ^^adds a touch of AJAX in bibtexbrowser to display bibtex entries inline.
-     * It uses the HIJAX design pattern: the Javascript code fetches the normal bibtex HTML page
-     * and extracts the bibtex.
-     * In other terms, URLs and content are left perfectly optimized for crawlers
-     * Note how beautiful is this piece of code thanks to JQuery.^^
-     */
-    function javascript()
-    {
-        // we use jquery with the official content delivery URLs
-        // Microsoft and Google also provide jquery with their content delivery networks
-        ?>
-        <script type="text/javascript" src="<?php echo JQUERY_URI ?>"></script>
-        <script type="text/javascript"><!--
-          // Javascript progressive enhancement for bibtexbrowser
-          $('a.biburl').each(function () { // for each url "[bibtex]"
-            var biburl = $(this);
-            if (biburl.attr('bibtexbrowser') === undefined) {
-              biburl.click(function (ev) { // we change the click semantics
-                ev.preventDefault(); // no open url
-                if (biburl.nextAll('pre').length === 0) { // we don't have yet the bibtex data
-                  var bibtexEntryUrl = $(this).attr('href');
-                  $.ajax({
-                    url: bibtexEntryUrl, dataType: 'html', success: function (data) { // we download it
-                      // elem is the element containing bibtex entry, creating a new element is required for Chrome and IE
-                      var elem = $('<pre class="purebibtex"/>');
-                      elem.text($('.purebibtex', data).text()); // both text() are required for IE
-                      // we add a link so that users clearly see that even with AJAX
-                      // there is still one URL per paper.
-                      elem.append(
-                        $('<div class="bibtex_entry_url">%% Bibtex entry URL: <a href="' + bibtexEntryUrl + '">' + bibtexEntryUrl + '</a></div>')
-                      ).appendTo(biburl.parent());
-                    }, error: function () {
-                      window.location.href = biburl.attr('href');
-                    }
-                  });
-                } else {
-                  biburl.nextAll('pre').toggle();
-                }  // we toggle the view
-              });
-              biburl.attr('bibtexbrowser', 'done');
-            } // end if biburl.bibtexbrowser;
-          });
-
-
-          --></script><?php
-    } // end function javascript
-
 
     if (!function_exists('javascript_math')) {
         function javascript_math()
@@ -1502,9 +1282,6 @@ if (!defined('BIBTEXBROWSER')) {
         tex2jax: {inlineMath: [["$","$"]]}
       });
 
-
-
-
             </script>
             <script src="<?php echo MATHJAX_URI ?>"></script>
             <?php
@@ -1513,38 +1290,43 @@ if (!defined('BIBTEXBROWSER')) {
 
     if (!function_exists('query2title')) {
         /** transforms an array representing a query into a formatted string */
-        function query2title($query)
+        function query2title(array $query): string
         {
             $headers = [];
             foreach ($query as $k => $v) {
                 if ($k == Q_INNER_AUTHOR) {
                     $k = 'author';
                 }
-                if ($k == \BibtexBrowser\BibtexBrowser\BibEntry::Q_INNER_TYPE) {
+
+                if ($k == BibEntry::Q_INNER_TYPE) {
                     // we changed from x-bibtex-type to type
                     $k = 'type';
                     // and we remove the regexp modifiers ^ $
-                    $v = preg_replace('/[$^]/', '', $v);
+                    $v = preg_replace('#[$^]#', '', $v);
                 }
+
                 if ($k == Q_KEYS) {
                     $v = json_encode(array_values($v));
                 }
+
                 if ($k == Q_RANGE) {
                     foreach ($v as $range) {
                         $range = $range[0] . '-' . $range[1];
                     }
+
                     $v = implode(',', $v);
                 }
-                $headers[$k] = __(ucwords($k)) . ': ' . ucwords(htmlspecialchars(
+
+                $headers[$k] = InternationalizationUtility::translate(ucwords($k)) . ': ' . ucwords(htmlspecialchars(
                     $v,
                     ENT_NOQUOTES | ENT_XHTML,
                     OUTPUT_ENCODING
                 ));
             }
+
             return implode(' &amp; ', $headers);
         }
-    } // if (!function_exists('query2title'))
-
+    }
 
     /** returns an HTTP 404 and displays en error message. */
     function nonExistentBibEntryError()
@@ -1691,92 +1473,10 @@ if (!defined('BIBTEXBROWSER')) {
         .btb-nav { text-align: right; }
 
         <?php
-    } // end function bibtexbrowserDefaultCSS
-
-    /** encapsulates the content of a delegate into full-fledged HTML (&lt;HTML>&lt;BODY> and TITLE)
-     * usage:
-     * <pre>
-     * $db = zetDB('bibacid-utf8.bib');
-     * $dis = new BibEntryDisplay($db->getEntryByKey('classical'));
-     * HTMLTemplate($dis);
-     * </pre>
-     * $content: an object with methods
-     * display()
-     * getRSS()
-     * getTitle()
-     * $title: title of the page
-     */
-    function HTMLTemplate($content)
-    {
-
-// when we load a page with AJAX
-        // the HTTP header is taken into account, not the <meta http-equiv>
-        header('Content-type: text/html; charset=' . OUTPUT_ENCODING);
-        echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">' . "\n"; ?>
-            <html xmlns="http://www.w3.org/1999/xhtml">
-            <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=<?php echo OUTPUT_ENCODING ?>"/>
-                <meta name="generator" content="bibtexbrowser v__GITHUB__"/>
-                <?php
-                // if ($content->getRSS()!='') echo '<link rel="alternate" type="application/rss+xml" title="RSS" href="'.$content->getRSS().'&amp;rss" />';
-                ?>
-                <?php
-
-                // we may add new metadata tags
-                $metatags = [];
-        if (method_exists($content, 'metadata')) {
-            $metatags = $content->metadata();
-        }
-        foreach ($metatags as $item) {
-            list($name, $value) = $item;
-            echo '<meta name="' . $name . '" property="' . $name . '" content="' . $value . '"/>' . "\n";
-        } // end foreach
-
-
-        // now the title
-        if (method_exists($content, 'getTitle')) {
-            echo '<title>' . strip_tags($content->getTitle()) . '</title>';
-        }
-
-        // now the CSS
-        echo '<style type="text/css"><!--  ' . "\n";
-
-        if (method_exists($content, 'getCSS')) {
-            echo $content->getCSS();
-        } elseif (is_readable(__DIR__ . '/bibtexbrowser.css')) {
-            readfile(__DIR__ . '/bibtexbrowser.css');
-        } else {
-            bibtexbrowserDefaultCSS();
-        }
-
-        echo "\n" . ' --></style>'; ?>
-            </head>
-            <body>
-            <?php
-            // configuration point to add a banner
-            echo bibtexbrowser_top_banner(); ?>
-            <?php
-            if (method_exists($content, 'getTitle')) {
-                echo '<div class="rheader">' . $content->getTitle() . '</div>';
-            } ?>
-            <?php
-            $content->display();
-        echo poweredby();
-
-        if (c('BIBTEXBROWSER_USE_PROGRESSIVE_ENHANCEMENT')) {
-            javascript();
-        }
-
-        if (BIBTEXBROWSER_RENDER_MATH) {
-            javascript_math();
-        } ?>
-            </body>
-            </html>
-            <?php
     }
 
-
-    /** does nothing but calls method display() on the content.
+    /**
+     * does nothing but calls method display() on the content.
      * usage:
      * <pre>
      * $db = zetDB('bibacid-utf8.bib');
@@ -1788,7 +1488,7 @@ if (!defined('BIBTEXBROWSER')) {
     {
         echo $content->display();
         if (c('BIBTEXBROWSER_USE_PROGRESSIVE_ENHANCEMENT')) {
-            javascript();
+            TemplateUtility::javascript();
         }
     }
 
@@ -1796,25 +1496,28 @@ if (!defined('BIBTEXBROWSER')) {
     {
         $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
         $db->load($arguments[1]);
+
         $current_entry = null;
         $current_field = null;
         $argumentsCount = count($arguments);
-        for ($i = 2; $i < $argumentsCount; $i++) {
+        for ($i = 2; $i < $argumentsCount; ++$i) {
             $arg = $arguments[$i];
             if ($arg === '--id') {
                 $current_entry = $db->getEntryByKey($arguments[$i + 1]);
-                $i += 1;
+                ++$i;
             }
-            if (preg_match('/^--set-(.*)/', $arg, $matches)) {
+
+            if (preg_match('#^--set-(.*)#', $arg, $matches)) {
                 $current_entry->setField($matches[1], $arguments[$i + 1]);
-                $i += 1;
+                ++$i;
             }
         }
+
         file_put_contents($arguments[1], $db->toBibtex());
     }
 }
 
-        @include(preg_replace('/\.php$/', '.after.php', __FILE__));
+        @include(preg_replace('#\.php$#', '.after.php', __FILE__));
         $class = BIBTEXBROWSER_MAIN;// extension point
         $main = new $class();
         $main->main();

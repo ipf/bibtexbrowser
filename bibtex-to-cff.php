@@ -13,15 +13,17 @@ function bibtexbrowser_cff($arguments)
 {
     $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
     $db->load($arguments[1]);
+
     $current_entry = null;
     $current_field = null;
     $argumentsCount = count($arguments);
-    for ($i = 2; $i < $argumentsCount; $i++) {
+    for ($i = 2; $i < $argumentsCount; ++$i) {
         $arg = $arguments[$i];
         if ($arg === '--id') {
             $current_entry = $db->getEntryByKey($arguments[$i + 1]);
         }
     }
+
     echo $current_entry->toCFF();
 }
 
