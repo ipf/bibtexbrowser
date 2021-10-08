@@ -16,7 +16,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $parameters->set(Option::SKIP, [
         __DIR__ . '/vendor'
     ]);
-    $containerConfigurator->import(SetList::PHP_74);
+    $containerConfigurator->import(SetList::PHP_80);
     $containerConfigurator->import(SetList::CODING_STYLE);
 
     // Define what rule sets will be applied
