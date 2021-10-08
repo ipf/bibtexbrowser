@@ -92,11 +92,8 @@ class StateBasedBibtexParser
      */
     private const BUFFER_SIZE = 100000;
 
-    public ParserDelegateInterface $delegate;
-
-    public function __construct($delegate)
+    public function __construct(public ParserDelegateInterface $delegate)
     {
-        $this->delegate = $delegate;
     }
 
     /**

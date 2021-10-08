@@ -169,7 +169,7 @@ function printGk($comment): string
         // removes lines prefixed "*" often used to have nice API comments
         $result = preg_replace('#^.*?\*#m', '', $result);
         return '<pre>' . $result . '</pre>';
-    } catch (\BibtexBrowser\BibtexBrowser\GakoParserException $gakoParserException) {
+    } catch (\BibtexBrowser\BibtexBrowser\GakoParserException) {
         return '<pre>' . $comment . '</pre>';
     }
 }

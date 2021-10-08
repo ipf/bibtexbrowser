@@ -17,7 +17,7 @@ use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
  * notes:
  * - BibEntry are usually obtained with getEntryByKey or multisearch
  */
-class BibEntry
+class BibEntry implements \Stringable
 {
     // used for representing the type of the bibtex entry internally
     /**
@@ -60,7 +60,7 @@ class BibEntry
 
 
     /** returns a debug string representation */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getType() . ' ' . $this->getKey();
     }
@@ -140,7 +140,7 @@ class BibEntry
         // but instead could contain HTML code (with links using the character "~" for example)
         // so "comment" is not transformed too
         if ($name !== 'url' && $name !== 'comment'
-            && 0 !== strpos($name, 'hp_') // homepage links should not be transformed with latex2html
+            && !str_starts_with($name, 'hp_') // homepage links should not be transformed with latex2html
         ) {
             $value = $this->transformValue($value);
 
@@ -258,20 +258,12 @@ class BibEntry
     public function getAndRenameLink(string $bibfield, ?string $iconurl = null): string
     {
         $extension = strtolower(pathinfo(parse_url($this->getField($bibfield), PHP_URL_PATH), PATHINFO_EXTENSION));
-        switch ($extension) {
-            // overriding the label if it's a known extension
-            case 'html':
-                return $this->getLink($bibfield, $iconurl, 'html');
-                break;
-            case 'pdf':
-                return $this->getLink($bibfield, $iconurl, 'pdf');
-                break;
-            case 'ps':
-                return $this->getLink($bibfield, $iconurl, 'ps');
-                break;
-            default:
-                return $this->getLink($bibfield, $iconurl, $bibfield);
-        }
+        return match ($extension) {
+            'html' => $this->getLink($bibfield, $iconurl, 'html'),
+            'pdf' => $this->getLink($bibfield, $iconurl, 'pdf'),
+            'ps' => $this->getLink($bibfield, $iconurl, 'ps'),
+            default => $this->getLink($bibfield, $iconurl, $bibfield),
+        };
     }
 
 
@@ -419,10 +411,10 @@ class BibEntry
         $arrayCount = count($array);
         // we merge the remaining ones
         for ($i = 0; $i < $arrayCount - 1; ++$i) {
-            if (strpos(CharacterUtility::latex2html($array[$i], false), '{') !== false && strpos(
+            if (str_contains(CharacterUtility::latex2html($array[$i], false), '{') && str_contains(
                 CharacterUtility::latex2html($array[$i + 1], false),
                 '}'
-            ) !== false) {
+            )) {
                 $res[] = $this->clean_top_curly(trim($array[$i]) . ' and ' . trim($array[$i + 1]));
                 ++$i;
             } else {

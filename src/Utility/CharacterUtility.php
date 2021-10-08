@@ -19,7 +19,7 @@ class CharacterUtility
         // performance increases with this test
         // bug found by Serge Barral: what happens if we have curly braces only (typically to ensure case in Latex)
         // added && strpos($line,'{')===false
-        if (strpos($line, '\\') === false && strpos($line, '{') === false) {
+        if (!str_contains($line, '\\') && !str_contains($line, '{')) {
             return $line;
         }
 

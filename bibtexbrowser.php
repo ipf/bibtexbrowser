@@ -605,39 +605,22 @@ if (!defined('BIBTEXBROWSER')) {
      */
     function compare_bib_entry_by_year(BibEntry $a, BibEntry $b): int
     {
-        $yearA = (int)$a->getYear(); // 0 if no year
-        $yearB = (int)$b->getYear();
-
         if ($yearA === 0) {
-            switch (strtolower($a->getYearRaw())) {
-                case Q_YEAR_INPRESS:
-                    $yearA = PHP_INT_MAX + ORDER_YEAR_INPRESS;
-                    break;
-                case Q_YEAR_ACCEPTED:
-                    $yearA = PHP_INT_MAX + ORDER_YEAR_ACCEPTED;
-                    break;
-                case Q_YEAR_SUBMITTED:
-                    $yearA = PHP_INT_MAX + ORDER_YEAR_SUBMITTED;
-                    break;
-                default:
-                    $yearA = PHP_INT_MAX + ORDER_YEAR_OTHERNONINT;
-            }
+            $yearA = match (strtolower($a->getYearRaw())) {
+                Q_YEAR_INPRESS => PHP_INT_MAX + ORDER_YEAR_INPRESS,
+                Q_YEAR_ACCEPTED => PHP_INT_MAX + ORDER_YEAR_ACCEPTED,
+                Q_YEAR_SUBMITTED => PHP_INT_MAX + ORDER_YEAR_SUBMITTED,
+                default => PHP_INT_MAX + ORDER_YEAR_OTHERNONINT,
+            };
         }
 
         if ($yearB === 0) {
-            switch (strtolower($b->getYearRaw())) {
-                case Q_YEAR_INPRESS:
-                    $yearB = PHP_INT_MAX + ORDER_YEAR_INPRESS;
-                    break;
-                case Q_YEAR_ACCEPTED:
-                    $yearB = PHP_INT_MAX + ORDER_YEAR_ACCEPTED;
-                    break;
-                case Q_YEAR_SUBMITTED:
-                    $yearB = PHP_INT_MAX + ORDER_YEAR_SUBMITTED;
-                    break;
-                default:
-                    $yearB = PHP_INT_MAX + ORDER_YEAR_OTHERNONINT;
-            }
+            $yearB = match (strtolower($b->getYearRaw())) {
+                Q_YEAR_INPRESS => PHP_INT_MAX + ORDER_YEAR_INPRESS,
+                Q_YEAR_ACCEPTED => PHP_INT_MAX + ORDER_YEAR_ACCEPTED,
+                Q_YEAR_SUBMITTED => PHP_INT_MAX + ORDER_YEAR_SUBMITTED,
+                default => PHP_INT_MAX + ORDER_YEAR_OTHERNONINT,
+            };
         }
 
         if ($yearA === $yearB) {
@@ -1238,7 +1221,7 @@ if (!defined('BIBTEXBROWSER')) {
     {
         $author = trim($author);
         // the author format is "Joe Dupont"
-        if (strpos($author, ',') === false) {
+        if (!str_contains($author, ',')) {
             $parts = explode(' ', $author);
             // get the last name
             $lastname = array_pop($parts);

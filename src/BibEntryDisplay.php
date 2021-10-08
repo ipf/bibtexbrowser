@@ -15,13 +15,10 @@ namespace BibtexBrowser\BibtexBrowser;
  */
 class BibEntryDisplay
 {
-
-    /** the bib entry to display */
-    public $bib;
-
-    public function __construct($bib = null)
-    {
-        $this->bib = $bib;
+    public function __construct(
+        /** the bib entry to display */
+        public $bib = null
+    ) {
     }
 
     public function setEntries($entries)

@@ -7,17 +7,8 @@ namespace BibtexBrowser\BibtexBrowser;
 /** represents @string{k=v} */
 class StringEntry
 {
-    public $name;
-
-    public $value;
-
-    public $filename;
-
-    public function __construct($k, $v, $filename)
+    public function __construct(public $name, public $value, public $filename)
     {
-        $this->name = $k;
-        $this->value = $v;
-        $this->filename = $filename;
     }
 
     public function toString()

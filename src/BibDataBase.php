@@ -199,23 +199,13 @@ class BibDataBase
             $year = strtolower($bib->getYearRaw());
             $yearInt = (int)$year;
 
-            // Allow for ordering of non-string values ('in press' etc.)
-            switch ($year) {
-                case (string)$yearInt: // Sorry for this hacky type-casting
-                    $key = $year;
-                    break;
-                case Q_YEAR_INPRESS:
-                    $key = PHP_INT_MAX + ORDER_YEAR_INPRESS;
-                    break;
-                case Q_YEAR_ACCEPTED:
-                    $key = PHP_INT_MAX + ORDER_YEAR_ACCEPTED;
-                    break;
-                case Q_YEAR_SUBMITTED:
-                    $key = PHP_INT_MAX + ORDER_YEAR_SUBMITTED;
-                    break;
-                default:
-                    $key = PHP_INT_MAX + ORDER_YEAR_OTHERNONINT;
-            }
+            $key = match ($year) {
+                (string)$yearInt => $year,
+                Q_YEAR_INPRESS => PHP_INT_MAX + ORDER_YEAR_INPRESS,
+                Q_YEAR_ACCEPTED => PHP_INT_MAX + ORDER_YEAR_ACCEPTED,
+                Q_YEAR_SUBMITTED => PHP_INT_MAX + ORDER_YEAR_SUBMITTED,
+                default => PHP_INT_MAX + ORDER_YEAR_OTHERNONINT,
+            };
 
             $result[$key] = $year;
         }
