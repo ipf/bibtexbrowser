@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Display;
+
+use BibtexBrowser\BibtexBrowser\BibDataBase;
 
 /** displays the publication records sorted by publication types (as configured by constant BIBLIOGRAPHYSECTIONS).
  * usage:
@@ -13,7 +15,7 @@ namespace BibtexBrowser\BibtexBrowser;
  * $d->display();
  * </pre>
  */
-class AcademicDisplay
+class AcademicDisplay implements DisplayInterface
 {
     public string $title = '';
 

@@ -1,7 +1,8 @@
 <?php
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Display;
 
+use BibtexBrowser\BibtexBrowser\BibDataBase;
 use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
 use BibtexBrowser\BibtexBrowser\Utility\TemplateUtility;
 
@@ -14,49 +15,49 @@ use BibtexBrowser\BibtexBrowser\Utility\TemplateUtility;
  * $d->display();
  * </pre>
  */
-class SimpleDisplay
+class SimpleDisplay implements DisplayInterface
 {
-    public $query;
+    private $query;
 
     public string $headerCSS = 'sheader';
 
-    public array $options = [];
+    private array $options = [];
 
-    public array $entries = [];
+    private array $entries = [];
 
-    public $headingLevel = BIBTEXBROWSER_HTMLHEADINGLEVEL;
+    private int $headingLevel = BIBTEXBROWSER_HTMLHEADINGLEVEL;
 
-    public function __construct($db = null, $query = [])
+    public function __construct(?BibDataBase $db = null, array $query = [])
     {
-        if ($db == null) {
+        if ($db === null) {
             return;
         }
 
         $this->setEntries($db->multisearch($query));
     }
 
-    public function incHeadingLevel($by = 1)
+    public function incHeadingLevel($by = 1): void
     {
         $this->headingLevel += $by;
     }
 
-    public function decHeadingLevel($by = 1)
+    public function decHeadingLevel($by = 1): void
     {
         $this->headingLevel -= $by;
     }
 
-    public function setDB($bibdatabase)
+    public function setDB($bibdatabase): void
     {
         $this->setEntries($bibdatabase->bibdb);
     }
 
-    public function metadata()
+    public function metadata(): array
     {
         if (BIBTEXBROWSER_ROBOTS_NOINDEX) {
             return [['robots', 'noindex']];
-        } else {
-            return [];
         }
+
+        return [];
     }
 
     /** sets the entries to be shown */

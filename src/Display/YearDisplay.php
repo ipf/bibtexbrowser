@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Display;
+
+use BibtexBrowser\BibtexBrowser\BibDataBase;
 
 /** displays the entries by year in reverse chronological order.
  * usage:
@@ -13,7 +15,7 @@ namespace BibtexBrowser\BibtexBrowser;
  * $d->display();
  * </pre>
  */
-class YearDisplay
+class YearDisplay implements DisplayInterface
 {
     public $entries;
 
@@ -45,7 +47,7 @@ class YearDisplay
     }
 
     /** Displays a set of bibtex entries in an HTML table */
-    public function display()
+    public function display(): void
     {
         $delegate = new SimpleDisplay();
         $delegate->setEntries($this->entries);

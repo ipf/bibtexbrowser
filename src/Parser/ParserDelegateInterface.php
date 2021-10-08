@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Parser;
 
 /** a default empty implementation of a delegate for StateBasedBibtexParser */
 interface ParserDelegateInterface

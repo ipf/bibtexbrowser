@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Gako;
+
+use BibtexBrowser\BibtexBrowser\Delimiter;
 
 /** provides a parametrizable parser. The main method is "parse" */
 class GakoParser

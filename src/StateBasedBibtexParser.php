@@ -2,6 +2,7 @@
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Parser\ParserDelegateInterface;
 use Exception;
 
 /** is a generic parser of bibtex files.

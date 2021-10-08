@@ -106,8 +106,8 @@ handling of >\n different
  */
 function create_wiki_parser()
 {
-    $x = new \BibtexBrowser\BibtexBrowser\GakoParser();
-    return $x->setDelegate(new \BibtexBrowser\BibtexBrowser\GakowikiMarkupToHTMLTranslator())
+    $x = new \BibtexBrowser\BibtexBrowser\Gako\GakoParser();
+    return $x->setDelegate(new \BibtexBrowser\BibtexBrowser\Gako\GakowikiMarkupToHTMLTranslator())
         ->addDelimX('comment', '<!--', '-->')->noNesting('comment')
         ->addDelim('bold', '**')
         ->addDelim('italic', '//')//->noNesting('italic')
@@ -134,8 +134,6 @@ function create_wiki_parser()
         ->addDelimX('bib', '\bib{', '}')
         ->addDelimX('cite', '\cite{', '}');
 }
-
- // end create_wiki_parser
 
 function gakowiki__doc()
 {
@@ -169,7 +167,7 @@ function printGk($comment): string
         // removes lines prefixed "*" often used to have nice API comments
         $result = preg_replace('#^.*?\*#m', '', $result);
         return '<pre>' . $result . '</pre>';
-    } catch (\BibtexBrowser\BibtexBrowser\GakoParserException) {
+    } catch (\BibtexBrowser\BibtexBrowser\Gako\GakoParserException) {
         return '<pre>' . $comment . '</pre>';
     }
 }

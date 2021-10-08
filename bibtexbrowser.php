@@ -111,10 +111,10 @@ if (!defined('BIBTEXBROWSER')) {
     @define('BIBTEXBROWSER_LOCAL_BIB_ONLY', true);
 
     // the default view in {SimpleDisplay,AcademicDisplay,RSSDisplay,BibtexDisplay}
-    @define('BIBTEXBROWSER_DEFAULT_DISPLAY', \BibtexBrowser\BibtexBrowser\SimpleDisplay::class);
+    @define('BIBTEXBROWSER_DEFAULT_DISPLAY', \BibtexBrowser\BibtexBrowser\Display\SimpleDisplay::class);
 
     // the default template
-    @define('BIBTEXBROWSER_DEFAULT_TEMPLATE', 'HTMLTemplate');
+    @define('BIBTEXBROWSER_DEFAULT_TEMPLATE', TemplateUtility::class.'::HTMLTemplate');
 
     // the target frame of menu links
     @define(
@@ -605,23 +605,19 @@ if (!defined('BIBTEXBROWSER')) {
      */
     function compare_bib_entry_by_year(BibEntry $a, BibEntry $b): int
     {
-        if ($yearA === 0) {
-            $yearA = match (strtolower($a->getYearRaw())) {
-                Q_YEAR_INPRESS => PHP_INT_MAX + ORDER_YEAR_INPRESS,
+        $yearA = match (strtolower($a->getYearRaw())) {
+            Q_YEAR_INPRESS => PHP_INT_MAX + ORDER_YEAR_INPRESS,
                 Q_YEAR_ACCEPTED => PHP_INT_MAX + ORDER_YEAR_ACCEPTED,
                 Q_YEAR_SUBMITTED => PHP_INT_MAX + ORDER_YEAR_SUBMITTED,
                 default => PHP_INT_MAX + ORDER_YEAR_OTHERNONINT,
-            };
-        }
+        };
 
-        if ($yearB === 0) {
-            $yearB = match (strtolower($b->getYearRaw())) {
-                Q_YEAR_INPRESS => PHP_INT_MAX + ORDER_YEAR_INPRESS,
+        $yearB = match (strtolower($b->getYearRaw())) {
+            Q_YEAR_INPRESS => PHP_INT_MAX + ORDER_YEAR_INPRESS,
                 Q_YEAR_ACCEPTED => PHP_INT_MAX + ORDER_YEAR_ACCEPTED,
                 Q_YEAR_SUBMITTED => PHP_INT_MAX + ORDER_YEAR_SUBMITTED,
                 default => PHP_INT_MAX + ORDER_YEAR_OTHERNONINT,
-            };
-        }
+        };
 
         if ($yearA === $yearB) {
             return 0;

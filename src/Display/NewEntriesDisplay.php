@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Display;
+
+use BibtexBrowser\BibtexBrowser\BibDataBase;
+use BibtexBrowser\BibtexBrowser\Display\DisplayInterface;
 
 /** displays the latest modified bibtex entries.
  * usage:
@@ -14,7 +17,7 @@ namespace BibtexBrowser\BibtexBrowser;
  * $d->display();
  * </pre>
  */
-class NewEntriesDisplay
+class NewEntriesDisplay implements DisplayInterface
 {
     public int $n = 5;
 
@@ -39,7 +42,7 @@ class NewEntriesDisplay
     }
 
     /** Displays a set of bibtex entries in an HTML table */
-    public function display()
+    public function display(): void
     {
         $array = $this->db->getLatestEntries($this->n);
         $delegate = new SimpleDisplay();

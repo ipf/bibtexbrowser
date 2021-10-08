@@ -1,6 +1,12 @@
 <?php
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Display;
+
+use BibtexBrowser\BibtexBrowser\Display\DisplayInterface;
+use BibtexBrowser\BibtexBrowser\Utility\TemplateUtility;
+use function bibtexbrowser_configuration;
+use function makeHref;
+use function query2title;
 
 /** creates paged output, e.g: [[http://localhost/bibtexbrowser/testPagedDisplay.php?page=1]]
  * usage:
@@ -13,7 +19,7 @@ namespace BibtexBrowser\BibtexBrowser;
  * $pd->display();
  * </pre>
  */
-class PagedDisplay
+class PagedDisplay implements DisplayInterface
 {
     public array $entries;
 
@@ -55,7 +61,7 @@ class PagedDisplay
         return query2title($this->query) . ' - page ' . $this->page;
     }
 
-    public function display()
+    public function display(): void
     {
         $less = false;
 
@@ -72,7 +78,7 @@ class PagedDisplay
         }
 
         $this->menu($less, $more);
-        \BibtexBrowser\BibtexBrowser\print_header_layout();
+        TemplateUtility::print_header_layout();
         for ($i = 0; $i < bibtexbrowser_configuration('PAGE_SIZE'); ++$i) {
             $index = ($this->page - 1) * bibtexbrowser_configuration('PAGE_SIZE') + $i;
             if (isset($this->entries[$index])) {
@@ -83,7 +89,7 @@ class PagedDisplay
             }
         }
 
-        \BibtexBrowser\BibtexBrowser\print_footer_layout();
+        TemplateUtility::print_footer_layout();
 
         $this->menu($less, $more);
     }

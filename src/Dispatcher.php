@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Display\BibEntryDisplay;
+use BibtexBrowser\BibtexBrowser\Display\BibtexDisplay;
+
 /** is responsible for transforming a query string of $_GET[..] into a publication list.
  * usage:
  * <pre>
@@ -21,12 +24,14 @@ class Dispatcher
     /** this is the query */
     public array $query = [];
 
-    /** the displayer of selected entries. The default is set in BIBTEXBROWSER_DEFAULT_DISPLAY.
+    /**
+     * the displayer of selected entries. The default is set in BIBTEXBROWSER_DEFAULT_DISPLAY.
      *  It could also be an RSSDisplay if the rss keyword is present
      */
     public $displayer = '';
 
-    /** the wrapper of selected entries. The default is an HTML wrapper
+    /**
+     * the wrapper of selected entries. The default is an HTML wrapper
      *  It could also be a NoWrapper when you include your pub list in your home page
      */
     public $wrapper = BIBTEXBROWSER_DEFAULT_TEMPLATE;
@@ -77,7 +82,7 @@ class Dispatcher
         // other wise we just create the $this->query
         foreach (array_keys($_GET) as $keyword) {
             // if the return value is END_DISPATCH, we finish bibtexbrowser (but not the whole PHP process in case we are embedded)
-            if (method_exists($this, $keyword) && $this->$keyword() == 'END_DISPATCH') {
+            if (method_exists($this, $keyword) && $this->$keyword() === 'END_DISPATCH') {
                 return;
             }
         }
@@ -174,13 +179,13 @@ class Dispatcher
         $this->displayer = $_GET['display'];
     }
 
-    public function rss()
+    public function rss(): void
     {
         $this->displayer = RSSDisplay::class;
         $this->wrapper = 'NoWrapper';
     }
 
-    public function astext()
+    public function astext(): void
     {
         $this->displayer = BibtexDisplay::class;
         $this->wrapper = 'NoWrapper';
@@ -397,5 +402,3 @@ class Dispatcher
         return 'END_DISPATCH';
     }
 }
-
- // end class Dispatcher

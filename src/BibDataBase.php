@@ -2,6 +2,8 @@
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Parser\BibDBBuilder;
+
 /** represents a bibliographic database that contains a set of bibliographic entries.
  * usage:
  * <pre>

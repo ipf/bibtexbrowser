@@ -6,10 +6,10 @@ namespace BibtexBrowser\BibtexBrowser\tests;
 
 use BibtexBrowser\BibtexBrowser\AcademicDisplay;
 use BibtexBrowser\BibtexBrowser\BibDataBase;
-use BibtexBrowser\BibtexBrowser\BibEntryDisplay;
-use BibtexBrowser\BibtexBrowser\PagedDisplay;
+use BibtexBrowser\BibtexBrowser\Display\BibEntryDisplay;
+use BibtexBrowser\BibtexBrowser\Display\PagedDisplay;
 use BibtexBrowser\BibtexBrowser\SimpleDisplay;
-use BibtexBrowser\BibtexBrowser\SimpleDisplayExt;
+use BibtexBrowser\BibtexBrowser\Display\SimpleDisplayExt;
 use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
 use PHPUnit\Framework\TestCase;
 

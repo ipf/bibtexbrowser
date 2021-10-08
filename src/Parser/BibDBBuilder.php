@@ -2,7 +2,14 @@
 
 declare(strict_types=1);
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Parser;
+
+use BibtexBrowser\BibtexBrowser\BibEntry;
+use BibtexBrowser\BibtexBrowser\Parser\ParserDelegateInterface;
+use BibtexBrowser\BibtexBrowser\StateBasedBibtexParser;
+use BibtexBrowser\BibtexBrowser\StringEntry;
+use const Q_INNER_AUTHOR;
+use const Q_KEY;
 
 /** builds arrays of BibEntry objects from a bibtex file.
  * usage:

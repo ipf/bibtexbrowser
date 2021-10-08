@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Parser;
+
+use BibtexBrowser\BibtexBrowser\Parser\ParserDelegateInterface;
+use const OUTPUT_ENCODING;
 
 /** is a possible delegate for StateBasedBibParser.
  * usage:

@@ -7,7 +7,7 @@ namespace BibtexBrowser\BibtexBrowser;
 /** represents @string{k=v} */
 class StringEntry
 {
-    public function __construct(public $name, public $value, public $filename)
+    public function __construct(public string $name, public string $value, public string $filename)
     {
     }
 
@@ -16,5 +16,3 @@ class StringEntry
         return '@string{' . $this->name . '={' . $this->value . '}}';
     }
 }
-
- // end class StringEntry

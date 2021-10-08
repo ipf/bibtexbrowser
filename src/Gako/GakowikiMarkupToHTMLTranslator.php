@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Gako;
+
+use function BibtexBrowser\BibtexBrowser\logical2url;
+use function gk_wiki2html;
 
 /** Defines a set of functions for interpreting a markup language in HTML.
  * Maintains a state to build the table of contents.
@@ -242,5 +245,3 @@ class GakowikiMarkupToHTMLTranslator
         return '';
     }
 }
-
- // end class

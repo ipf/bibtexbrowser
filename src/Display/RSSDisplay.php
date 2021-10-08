@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Display;
 
 /** is used to create an RSS feed.
  * usage:
@@ -15,7 +15,7 @@ namespace BibtexBrowser\BibtexBrowser;
  * $rss->display();
  * </pre>
  */
-class RSSDisplay
+class RSSDisplay implements DisplayInterface
 {
     public $entries;
 
@@ -71,7 +71,7 @@ class RSSDisplay
         $x->wrapper = 'NoWrapper';
     }
 
-    public function display()
+    public function display(): void
     {
         header('Content-type: application/rss+xml');
         echo '<?xml version="1.0" encoding="' . OUTPUT_ENCODING . '"?>';
@@ -100,13 +100,10 @@ class RSSDisplay
                         <guid isPermaLink="false"><?php echo urlencode(@$_GET[Q_FILE] . '::' . $bibentry->getKey()); ?></guid>
                     </item>
                     <?php
-                }
-
-        /* end foreach */ ?>
+                } ?>
             </channel>
         </rss>
 
-        <?php
-//exit;
+<?php
     }
 }

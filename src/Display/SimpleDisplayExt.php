@@ -1,8 +1,8 @@
 <?php
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Display;
 
-class SimpleDisplayExt extends \BibtexBrowser\BibtexBrowser\SimpleDisplay
+class SimpleDisplayExt extends SimpleDisplay
 {
     public function setIndices()
     {

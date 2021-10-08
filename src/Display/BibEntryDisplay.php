@@ -1,6 +1,9 @@
 <?php
 
-namespace BibtexBrowser\BibtexBrowser;
+namespace BibtexBrowser\BibtexBrowser\Display;
+
+use function c;
+use const BOOKTITLE;
 
 /** displays a single bib entry.
  * usage:
@@ -13,7 +16,7 @@ namespace BibtexBrowser\BibtexBrowser;
  * - the top-level header (usually &lt;H1>) must be done by the caller.
  * - this view is optimized for Google Scholar
  */
-class BibEntryDisplay
+class BibEntryDisplay implements DisplayInterface
 {
     public function __construct(
         /** the bib entry to display */
@@ -54,7 +57,7 @@ class BibEntryDisplay
         return $subtitle . $abstract . $download . $reference . $bibtex . $this->bib->toCoins();
     }
 
-    public function display()
+    public function display(): void
     {
         // we encapsulate everything so that the output of display() is still valid XHTML
         echo '<div>';
@@ -120,8 +123,6 @@ class BibEntryDisplay
         return $result;
     }
 
-    // end function metadata
-
     public function metadata_opengraph($result)
     {
         // Facebook metadata
@@ -140,8 +141,6 @@ class BibEntryDisplay
         $result[] = ['og:published_time', $this->bib->getYear()];
         return $result;
     }
-
-    // end function metadata_opengraph
 
     public function metadata_dublin_core($result)
     {
@@ -182,7 +181,7 @@ class BibEntryDisplay
         }
 
         // BOOKTITLE: JOURNAL NAME OR PROCEEDINGS
-        if ($this->bib->getType() == 'article') { // journal article
+        if ($this->bib->getType() === 'article') { // journal article
             $result[] = ['citation_journal_title', $this->bib->getField('journal')];
             $result[] = ['citation_volume', $this->bib->getField('volume')];
             if ($this->bib->hasField('number')) {
@@ -199,25 +198,25 @@ class BibEntryDisplay
             }
         }
 
-        if ($this->bib->getType() == 'inproceedings' || $this->bib->getType() == 'conference') {
+        if ($this->bib->getType() === 'inproceedings' || $this->bib->getType() === 'conference') {
             $result[] = ['citation_conference_title', $this->bib->getField(BOOKTITLE)];
             $result[] = ['citation_conference', $this->bib->getField(BOOKTITLE)];
         }
 
-        if ($this->bib->getType() == 'phdthesis'
-            || $this->bib->getType() == 'mastersthesis'
-            || $this->bib->getType() == 'bachelorsthesis'
+        if ($this->bib->getType() === 'phdthesis'
+            || $this->bib->getType() === 'mastersthesis'
+            || $this->bib->getType() === 'bachelorsthesis'
         ) {
             $result[] = ['citation_dissertation_institution', $this->bib->getField('school')];
         }
 
-        if ($this->bib->getType() == 'techreport'
+        if ($this->bib->getType() === 'techreport'
             && $this->bib->hasField('number')
         ) {
             $result[] = ['citation_technical_report_number', $this->bib->getField('number')];
         }
 
-        if ($this->bib->getType() == 'techreport'
+        if ($this->bib->getType() === 'techreport'
             && $this->bib->hasField('institution')
         ) {
             $result[] = ['citation_technical_report_institution', $this->bib->getField('institution')];
@@ -266,7 +265,7 @@ class BibEntryDisplay
             $result[] = ['eprints.publisher', $this->bib->getPublisher()];
         }
 
-        if ($this->bib->getType() == 'article') { // journal article
+        if ($this->bib->getType() === 'article') { // journal article
             $result[] = ['eprints.type', 'article'];
             $result[] = ['eprints.publication', $this->bib->getField('journal')];
             $result[] = ['eprints.volume', $this->bib->getField('volume')];
@@ -275,20 +274,20 @@ class BibEntryDisplay
             }
         }
 
-        if ($this->bib->getType() == 'inproceedings' || $this->bib->getType() == 'conference') {
+        if ($this->bib->getType() === 'inproceedings' || $this->bib->getType() === 'conference') {
             $result[] = ['eprints.type', 'proceeding'];
             $result[] = ['eprints.book_title', $this->bib->getField(BOOKTITLE)];
         }
 
-        if ($this->bib->getType() == 'phdthesis'
-            || $this->bib->getType() == 'mastersthesis'
-            || $this->bib->getType() == 'bachelorsthesis'
+        if ($this->bib->getType() === 'phdthesis'
+            || $this->bib->getType() === 'mastersthesis'
+            || $this->bib->getType() === 'bachelorsthesis'
         ) {
             $result[] = ['eprints.type', 'thesis'];
             $result[] = ['eprints.institution', $this->bib->getField('school')];
         }
 
-        if ($this->bib->getType() == 'techreport') {
+        if ($this->bib->getType() === 'techreport') {
             $result[] = ['eprints.type', 'monograph'];
             if ($this->bib->hasField('number')) {
                 $result[] = ['eprints.number', $this->bib->getField('number')];
@@ -311,8 +310,4 @@ class BibEntryDisplay
         // --------------------------------- END METADATA EPRINTS
         return $result;
     }
-
-    // end method metatada_eprints;
 }
-
- // end class BibEntryDisplay
