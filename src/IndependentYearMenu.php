@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
+
 /** outputs an horizontal  year-based menu
  * usage:
  * <pre>
@@ -22,9 +24,9 @@ class IndependentYearMenu
         $yearIndex = $db->yearIndex();
         echo '<div id="yearmenu">Year: ';
         $formatedYearIndex = [];
-        $formatedYearIndex[] = '<a ' . makeHref([Q_YEAR => '.*']) . '>All</a>';
+        $formatedYearIndex[] = '<a ' . makeHref([Configuration::Q_YEAR => '.*']) . '>All</a>';
         foreach ($yearIndex as $year) {
-            $formatedYearIndex[] = '<a ' . makeHref([Q_YEAR => $year]) . '>' . $year . '</a>';
+            $formatedYearIndex[] = '<a ' . makeHref([Configuration::Q_YEAR => $year]) . '>' . $year . '</a>';
         }
 
         // by default the separator is a |

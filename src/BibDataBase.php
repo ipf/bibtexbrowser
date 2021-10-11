@@ -2,6 +2,7 @@
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 use BibtexBrowser\BibtexBrowser\Parser\BibDBBuilder;
 
 /** represents a bibliographic database that contains a set of bibliographic entries.
@@ -203,10 +204,10 @@ class BibDataBase
 
             $key = match ($year) {
                 (string)$yearInt => $year,
-                Q_YEAR_INPRESS => PHP_INT_MAX + ORDER_YEAR_INPRESS,
-                Q_YEAR_ACCEPTED => PHP_INT_MAX + ORDER_YEAR_ACCEPTED,
-                Q_YEAR_SUBMITTED => PHP_INT_MAX + ORDER_YEAR_SUBMITTED,
-                default => PHP_INT_MAX + ORDER_YEAR_OTHERNONINT,
+                Configuration::Q_YEAR_INPRESS => PHP_INT_MAX + Configuration::ORDER_YEAR_INPRESS,
+                Configuration::Q_YEAR_ACCEPTED => PHP_INT_MAX + Configuration::ORDER_YEAR_ACCEPTED,
+                Configuration::Q_YEAR_SUBMITTED => PHP_INT_MAX + Configuration::ORDER_YEAR_SUBMITTED,
+                default => PHP_INT_MAX + Configuration::ORDER_YEAR_OTHERNONINT,
             };
 
             $result[$key] = $year;
@@ -260,7 +261,7 @@ class BibDataBase
             return [];
         }
 
-        if (isset($query[Q_ALL])) {
+        if (isset($query[Configuration::Q_ALL])) {
             return array_values($this->bibdb);
         }
 
@@ -270,18 +271,18 @@ class BibDataBase
             $entryisselected = true;
             foreach ($query as $field => $fragment) {
                 $field = strtolower($field);
-                if ($field == Q_SEARCH) {
+                if ($field == Configuration::Q_SEARCH) {
                     // we search in the whole bib entry
                     if (!$bib->hasPhrase($fragment)) {
                         $entryisselected = false;
                         break;
                     }
-                } elseif ($field == Q_EXCLUDE) {
+                } elseif ($field == Configuration::Q_EXCLUDE) {
                     if ($bib->hasPhrase($fragment)) {
                         $entryisselected = false;
                         break;
                     }
-                } elseif ($field == Q_TYPE || $field == BibEntry::Q_INNER_TYPE) {
+                } elseif ($field == Configuration::Q_TYPE || $field == BibEntry::Q_INNER_TYPE) {
                     // types are always exact search
                     // remarks Ken
                     // type:"book" should only select book (and not inbook, book, bookchapter)
@@ -291,16 +292,16 @@ class BibDataBase
                         $entryisselected = false;
                         break;
                     }
-                } elseif ($field == Q_KEYS) {
-                    if (!in_array($bib->getKey(), $query[Q_KEYS])) {
+                } elseif ($field == Configuration::Q_KEYS) {
+                    if (!in_array($bib->getKey(), $query[Configuration::Q_KEYS])) {
                         $entryisselected = false;
                         break;
                     }
-                } elseif ($field == Q_RANGE) {
+                } elseif ($field == Configuration::Q_RANGE) {
                     $year = $bib->getYear();
                     $withinRange = false;
 
-                    foreach ($query[Q_RANGE] as $elements) {
+                    foreach ($query[Configuration::Q_RANGE] as $elements) {
                         if ($elements[0] === '' && $elements[1] === '') {
                             $withinRange = true;
                         } elseif ($elements[0] === '' && $year <= $elements[1]) {

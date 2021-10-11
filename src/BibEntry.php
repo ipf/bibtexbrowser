@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 use BibtexBrowser\BibtexBrowser\Utility\CharacterUtility;
 use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
 
@@ -102,12 +103,12 @@ class BibEntry implements \Stringable
     {
         // Slashes are not allowed in keys because they don't play well with web servers
         // if url-rewriting is used
-        $this->setField(Q_KEY, str_replace('/', '-', $value));
+        $this->setField(Configuration::Q_KEY, str_replace('/', '-', $value));
     }
 
-    public function transformValue($value)
+    public function transformValue(string $value): string
     {
-        if (c('BIBTEXBROWSER_USE_LATEX2HTML')) {
+        if (Configuration::BIBTEXBROWSER_USE_LATEX2HTML) {
             // trim space
             $value = CharacterUtility::xtrim($value);
 
@@ -116,7 +117,7 @@ class BibEntry implements \Stringable
             $value = CharacterUtility::latex2html($value);
 
             // transform to the target output encoding
-            $value = html_entity_decode($value, ENT_QUOTES | ENT_XHTML, OUTPUT_ENCODING);
+            $value = html_entity_decode($value, ENT_QUOTES | ENT_XHTML, Configuration::OUTPUT_ENCODING);
         }
 
         return $value;
@@ -145,8 +146,8 @@ class BibEntry implements \Stringable
             $value = $this->transformValue($value);
 
             // 4. transform existing encoded character in the new format
-            if (function_exists('mb_convert_encoding') && OUTPUT_ENCODING !== BIBTEX_INPUT_ENCODING) {
-                $value = mb_convert_encoding($value, OUTPUT_ENCODING, BIBTEX_INPUT_ENCODING);
+            if (function_exists('mb_convert_encoding') && Configuration::OUTPUT_ENCODING !== Configuration::BIBTEX_INPUT_ENCODING) {
+                $value = mb_convert_encoding($value, Configuration::OUTPUT_ENCODING, Configuration::BIBTEX_INPUT_ENCODING);
             }
         }
 
@@ -182,7 +183,7 @@ class BibEntry implements \Stringable
             return $f($this);
         }
 
-        return BIBTEXBROWSER_URL . '?' . createQueryString([Q_KEY => $this->getKey(), Q_FILE => $this->filename]);
+        return Configuration::BIBTEXBROWSER_URL . '?' . createQueryString([Configuration::Q_KEY => $this->getKey(), Configuration::Q_FILE => $this->filename]);
     }
 
     /** @see bib2links(), kept for backward compatibility */
@@ -343,7 +344,7 @@ class BibEntry implements \Stringable
      * return a string 'Unknown'. */
     public function getAuthor()
     {
-        if (array_key_exists(AUTHOR, $this->fields)) {
+        if (array_key_exists(Configuration::AUTHOR, $this->fields)) {
             return $this->getFormattedAuthorsString();
         }
 
@@ -355,7 +356,7 @@ class BibEntry implements \Stringable
     /** Returns the key of this entry */
     public function getKey()
     {
-        return $this->getField(Q_KEY);
+        return $this->getField(Configuration::Q_KEY);
     }
 
     /** Returns the title of this entry? */
@@ -375,15 +376,15 @@ class BibEntry implements \Stringable
         }
 
         if ($this->getType() === 'phdthesis') {
-            return $this->getField(SCHOOL);
+            return $this->getField(Configuration::SCHOOL);
         }
 
         if ($this->getType() === 'mastersthesis') {
-            return $this->getField(SCHOOL);
+            return $this->getField(Configuration::SCHOOL);
         }
 
         if ($this->getType() === 'bachelorsthesis') {
-            return $this->getField(SCHOOL);
+            return $this->getField(Configuration::SCHOOL);
         }
 
         if ($this->getType() === 'techreport') {
@@ -403,8 +404,8 @@ class BibEntry implements \Stringable
     public function split_authors()
     {
         $array = [];
-        if (array_key_exists(Q_AUTHOR, $this->raw_fields)) {
-            $array = preg_split('# and( |$)#ims', @$this->raw_fields[Q_AUTHOR]);
+        if (array_key_exists(Configuration::Q_AUTHOR, $this->raw_fields)) {
+            $array = preg_split('# and( |$)#ims', @$this->raw_fields[Configuration::Q_AUTHOR]);
         }
 
         $res = [];
@@ -421,9 +422,10 @@ class BibEntry implements \Stringable
                 $res[] = trim($array[$i]);
             }
         }
-
-        if (!preg_match('#\}#', CharacterUtility::latex2html($array[count($array) - 1], false))) {
-            $res[] = trim($array[count($array) - 1] ?? '');
+        if (count($array) > 0) {
+            if (!preg_match('#\}#', CharacterUtility::latex2html($array[count($array) - 1], false))) {
+                $res[] = trim($array[count($array) - 1] ?? '');
+            }
         }
 
         return $res;
@@ -436,15 +438,15 @@ class BibEntry implements \Stringable
     public function formatAuthor($author)
     {
         $author = $this->transformValue($author);
-        if (bibtexbrowser_configuration('USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT')) {
+        if (Configuration::USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT) {
             return $this->formatAuthorCommaSeparated($author);
         }
 
-        if (bibtexbrowser_configuration('USE_INITIALS_FOR_NAMES')) {
+        if (Configuration::USE_INITIALS_FOR_NAMES) {
             return $this->formatAuthorInitials($author);
         }
 
-        if (bibtexbrowser_configuration('USE_FIRST_THEN_LAST')) {
+        if (Configuration::USE_FIRST_THEN_LAST) {
             return $this->formatAuthorCanonical($author);
         }
 
@@ -523,13 +525,13 @@ class BibEntry implements \Stringable
             $array_authors[] = $this->formatAuthor($author);
         }
 
-        if (BIBTEXBROWSER_AUTHOR_LINKS === 'homepage') {
+        if (Configuration::BIBTEXBROWSER_AUTHOR_LINKS === 'homepage') {
             foreach ($array_authors as $k => $author) {
                 $array_authors[$k] = $this->addHomepageLink($author);
             }
         }
 
-        if (BIBTEXBROWSER_AUTHOR_LINKS === 'resultpage') {
+        if (Configuration::BIBTEXBROWSER_AUTHOR_LINKS === 'resultpage') {
             foreach ($array_authors as $k => $author) {
                 $array_authors[$k] = $this->addAuthorPageLink($author);
             }
@@ -540,12 +542,12 @@ class BibEntry implements \Stringable
 
     /** Adds to getFormattedAuthors() the home page links and returns a string (not an array). Is configured with BIBTEXBROWSER_AUTHOR_LINKS and USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT.
      */
-    public function getFormattedAuthorsString()
+    public function getFormattedAuthorsString(): string
     {
         return $this->implodeAuthors($this->getFormattedAuthorsArray());
     }
 
-    public function implodeAuthors($authors)
+    public function implodeAuthors($authors): string
     {
         if (count($authors) === 0) {
             return '';
@@ -557,9 +559,9 @@ class BibEntry implements \Stringable
 
         $result = '';
 
-        $sep = bibtexbrowser_configuration('USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT') ? '; ' : ', ';
-        if (FORCE_NAMELIST_SEPARATOR !== '') {
-            $sep = FORCE_NAMELIST_SEPARATOR;
+        $sep = Configuration::USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT ? '; ' : ', ';
+        if (Configuration::FORCE_NAMELIST_SEPARATOR !== '') {
+            $sep = Configuration::FORCE_NAMELIST_SEPARATOR;
         }
 
         $authorsCount = count($authors);
@@ -567,9 +569,9 @@ class BibEntry implements \Stringable
             $result .= $authors[$i] . $sep;
         }
 
-        $lastAuthorSeperator = bibtexbrowser_configuration('LAST_AUTHOR_SEPARATOR');
+        $lastAuthorSeperator = Configuration::LAST_AUTHOR_SEPARATOR;
         // add Oxford comma if there are more than 2 authors
-        if (bibtexbrowser_configuration('USE_OXFORD_COMMA') && count($authors) > 2) {
+        if (Configuration::USE_OXFORD_COMMA && count($authors) > 2) {
             $lastAuthorSeperator = $sep . $lastAuthorSeperator;
             $lastAuthorSeperator = preg_replace('# {2,}#', ' ', $lastAuthorSeperator); // get rid of double spaces
         }
@@ -580,7 +582,7 @@ class BibEntry implements \Stringable
     /** adds a link to the author page */
     public function addAuthorPageLink($author)
     {
-        $link = makeHref([Q_AUTHOR => $author]);
+        $link = makeHref([Configuration::Q_AUTHOR => $author]);
         return sprintf('<a %s>%s</a>', $link, $author);
     }
 
@@ -650,27 +652,29 @@ class BibEntry implements \Stringable
     public function getEditors()
     {
         $editors = [];
-        return preg_split('# and #i', $this->getField(EDITOR));
+        return preg_split('# and #i', $this->getField(Configuration::EDITOR));
     }
 
-    /** Returns the editors of this entry as an arry */
-    public function getFormattedEditors()
+    /** Returns the editors of this entry as an arry
+     * @throws \Exception
+     */
+    public function getFormattedEditors(): string
     {
         $editors = [];
         foreach ($this->getEditors() as $editor) {
             $editors[] = $this->formatAuthor($editor);
         }
 
-        $sep = bibtexbrowser_configuration('USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT') ? '; ' : ', ';
-        if (FORCE_NAMELIST_SEPARATOR !== '') {
-            $sep = FORCE_NAMELIST_SEPARATOR;
+        $sep = Configuration::USE_COMMA_AS_NAME_SEPARATOR_IN_OUTPUT ? '; ' : ', ';
+        if (Configuration::FORCE_NAMELIST_SEPARATOR !== '') {
+            $sep = Configuration::FORCE_NAMELIST_SEPARATOR;
         }
 
         return implode($sep, $editors) . ', ' . (count($editors) > 1 ? 'eds.' : 'ed.');
     }
 
     /** Returns the year of this entry? */
-    public function getYear()
+    public function getYear(): string
     {
         return InternationalizationUtility::translate(strtolower($this->getField('year') ?? ''));
     }
@@ -708,23 +712,23 @@ class BibEntry implements \Stringable
     /** Returns the raw, undecorated abbreviation depending on ABBRV_TYPE. */
     public function getRawAbbrv()
     {
-        if (c('ABBRV_TYPE') === 'index') {
+        if (Configuration::ABBRV_TYPE === 'index') {
             return $this->index;
         }
 
-        if (c('ABBRV_TYPE') === 'none') {
+        if (Configuration::ABBRV_TYPE === 'none') {
             return '';
         }
 
-        if (c('ABBRV_TYPE') === 'key') {
+        if (Configuration::ABBRV_TYPE === 'key') {
             return $this->getKey();
         }
 
-        if (c('ABBRV_TYPE') === 'year') {
+        if (Configuration::ABBRV_TYPE === 'year') {
             return $this->getYear();
         }
 
-        if (c('ABBRV_TYPE') === 'x-abbrv') {
+        if (Configuration::ABBRV_TYPE === 'x-abbrv') {
             if ($this->hasField('x-abbrv')) {
                 return $this->getField('x-abbrv');
             }
@@ -732,7 +736,7 @@ class BibEntry implements \Stringable
             return $this->abbrv;
         }
 
-        if (c('ABBRV_TYPE') === 'keys-index') {
+        if (Configuration::ABBRV_TYPE === 'keys-index') {
             if (isset($_GET[Q_INNER_KEYS_INDEX])) {
                 return $_GET[Q_INNER_KEYS_INDEX][$this->getKey()];
             }
@@ -741,7 +745,7 @@ class BibEntry implements \Stringable
         }
 
         // otherwise it is a user-defined function in bibtexbrowser.local.php
-        $f = c('ABBRV_TYPE');
+        $f = Configuration::ABBRV_TYPE;
         return $f($this);
     }
 
@@ -749,7 +753,7 @@ class BibEntry implements \Stringable
     public function getAbbrv()
     {
         $abbrv = $this->getRawAbbrv();
-        if (c('ABBRV_TYPE') !== 'none') {
+        if (Configuration::ABBRV_TYPE !== 'none') {
             $abbrv = '[' . $abbrv . ']';
         }
 
@@ -766,14 +770,14 @@ class BibEntry implements \Stringable
     /** Returns the verbatim text of this bib entry. */
     public function getText()
     {
-        if (c('BIBTEXBROWSER_BIBTEX_VIEW') === 'original') {
+        if (Configuration::BIBTEXBROWSER_BIBTEX_VIEW === 'original') {
             return $this->text;
         }
 
-        if (c('BIBTEXBROWSER_BIBTEX_VIEW') === 'reconstructed') {
+        if (Configuration::BIBTEXBROWSER_BIBTEX_VIEW === 'reconstructed') {
             $result = '@' . $this->getType() . '{' . $this->getKey() . ",\n";
             foreach ($this->raw_fields as $k => $v) {
-                if (!preg_match('/^(' . c('BIBTEXBROWSER_BIBTEX_VIEW_FILTEREDOUT') . ')$/i', $k)
+                if (!preg_match('/^(' . Configuration::BIBTEXBROWSER_BIBTEX_VIEW_FILTEREDOUT . ')$/i', $k)
                     && !preg_match('/^(key|' . Q_INNER_AUTHOR . '|' . self::Q_INNER_TYPE . ')$/i', $k)) {
                     $result .= ' ' . $k . ' = {' . $v . '},' . "\n";
                 }
@@ -782,7 +786,7 @@ class BibEntry implements \Stringable
             return $result . "}\n";
         }
 
-        throw new \Exception('incorrect value of BIBTEXBROWSER_BIBTEX_VIEW: ' . BIBTEXBROWSER_BIBTEX_VIEW);
+        throw new \Exception('incorrect value of BIBTEXBROWSER_BIBTEX_VIEW: ' . Configuration::BIBTEXBROWSER_BIBTEX_VIEW);
     }
 
     /** Returns true if this bib entry contains the given phrase (PREG regexp)
@@ -795,10 +799,8 @@ class BibEntry implements \Stringable
         // i.e. all latex markups are not considered for searches
         if (!$field) {
             return preg_match('/' . $phrase . '/i', $this->getConstants() . ' ' . implode(' ', $this->getFields()));
-            //return stripos($this->getText(), $phrase) !== false;
         }
 
-        //if ($this->hasField($field) &&  (stripos($this->getField($field), $phrase) !== false) ) {
         return $this->hasField($field) && (preg_match('/' . $phrase . '/i', $this->getField($field)));
     }
 
@@ -808,11 +810,9 @@ class BibEntry implements \Stringable
     {
         $result = '';
         if ($wrapped) {
-            switch (BIBTEXBROWSER_LAYOUT) { // open row
-                case 'list':
-                    $result .= '<li class="bibline">';
-                    break;
+            switch (Configuration::BIBTEXBROWSER_LAYOUT) { // open row
                 case 'ordered_list':
+                case 'list':
                     $result .= '<li class="bibline">';
                     break;
                 case 'table':
@@ -820,7 +820,7 @@ class BibEntry implements \Stringable
                     break;
                 case 'definition':
                     $result .= '<dl class="bibline"><dt class="bibref">';
-                    if (c('ABBRV_TYPE') === 'none') {
+                    if (Configuration::ABBRV_TYPE === 'none') {
                         die('Cannot define an empty term!');
                     }
 
@@ -830,9 +830,9 @@ class BibEntry implements \Stringable
             }
 
             $result .= $this->anchor();
-            if (BIBTEXBROWSER_LAYOUT === 'table') {
+            if (Configuration::BIBTEXBROWSER_LAYOUT === 'table') {
                 $result .= $this->getAbbrv() . '</td><td class="bibitem">';
-            } elseif (BIBTEXBROWSER_LAYOUT === 'definition') {
+            } elseif (Configuration::BIBTEXBROWSER_LAYOUT === 'definition') {
                 $result .= $this->getAbbrv() . '</dt><dd class="bibitem">';
             }
         }
@@ -844,7 +844,7 @@ class BibEntry implements \Stringable
         $result .= ' ' . bib2links($this);
 
         if ($wrapped) {
-            switch (BIBTEXBROWSER_LAYOUT) { // close row
+            switch (Configuration::BIBTEXBROWSER_LAYOUT) { // close row
                 case 'ordered_list':
                 case 'list':
                     $result .= '</li>' . "\n";
@@ -869,7 +869,7 @@ class BibEntry implements \Stringable
      */
     public function toCoins()
     {
-        if (c('METADATA_COINS') == false) {
+        if (Configuration::METADATA_COINS == false) {
             return;
         }
 
@@ -884,14 +884,14 @@ class BibEntry implements \Stringable
         } elseif ($type === 'inproceedings') {
             $url_parts[] = 'rft_val_fmt=' . CharacterUtility::s3988('info:ofi/fmt:kev:mtx:book');
             $url_parts[] = 'rft.atitle=' . CharacterUtility::s3988($this->getTitle());
-            $url_parts[] = 'rft.btitle=' . CharacterUtility::s3988($this->getField(BOOKTITLE));
+            $url_parts[] = 'rft.btitle=' . CharacterUtility::s3988($this->getField(Configuration::BOOKTITLE));
 
             // zotero does not support with this proceeding and conference
             // they give the wrong title
             $url_parts[] = 'rft.genre=bookitem';
         } elseif ($type === 'incollection') {
             $url_parts[] = 'rft_val_fmt=' . CharacterUtility::s3988('info:ofi/fmt:kev:mtx:book');
-            $url_parts[] = 'rft.btitle=' . CharacterUtility::s3988($this->getField(BOOKTITLE));
+            $url_parts[] = 'rft.btitle=' . CharacterUtility::s3988($this->getField(Configuration::BOOKTITLE));
             $url_parts[] = 'rft.atitle=' . CharacterUtility::s3988($this->getTitle());
             $url_parts[] = 'rft.genre=bookitem';
         } elseif ($type === 'article') {
@@ -917,7 +917,7 @@ class BibEntry implements \Stringable
 
         // referrer, the id of a collection of objects
         // see also http://www.openurl.info/registry/docs/pdf/info-sid.pdf
-        $url_parts[] = 'rfr_id=' . CharacterUtility::s3988('info:sid/' . @$_SERVER['HTTP_HOST'] . ':' . basename(@$_GET[Q_FILE]));
+        $url_parts[] = 'rfr_id=' . CharacterUtility::s3988('info:sid/' . @$_SERVER['HTTP_HOST'] . ':' . basename(@$_GET[Configuration::Q_FILE]));
 
         $url_parts[] = 'rft.date=' . CharacterUtility::s3988($this->getYear());
 
@@ -956,7 +956,7 @@ class BibEntry implements \Stringable
     {
         $result = '';
         $result .= '<pre class="purebibtex">'; // pre is nice when it is embedded with no CSS available
-        $entry = htmlspecialchars($this->getFullText(), ENT_NOQUOTES | ENT_XHTML, OUTPUT_ENCODING);
+        $entry = htmlspecialchars($this->getFullText(), ENT_NOQUOTES | ENT_XHTML, Configuration::OUTPUT_ENCODING);
 
         // Fields that should be hyperlinks
         // the order matters

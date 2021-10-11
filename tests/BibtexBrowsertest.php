@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser\tests;
 
-use BibtexBrowser\BibtexBrowser\AcademicDisplay;
+use BibtexBrowser\BibtexBrowser\Display\AcademicDisplay;
 use BibtexBrowser\BibtexBrowser\BibDataBase;
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 use BibtexBrowser\BibtexBrowser\Display\BibEntryDisplay;
 use BibtexBrowser\BibtexBrowser\Display\PagedDisplay;
-use BibtexBrowser\BibtexBrowser\SimpleDisplay;
 use BibtexBrowser\BibtexBrowser\Display\SimpleDisplayExt;
+use BibtexBrowser\BibtexBrowser\Display\SimpleDisplay;
 use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
 use PHPUnit\Framework\TestCase;
 
@@ -168,7 +169,7 @@ class BibtexBrowsertest extends TestCase
     public function testMultiSearch(): void
     {
         $btb = $this->createDB();
-        $q = [Q_AUTHOR => 'monperrus'];
+        $q = [Configuration::Q_AUTHOR => 'monperrus'];
         $results = $btb->multisearch($q);
         $entry = $results[0];
         $this->assertCount(1, $results);
@@ -178,7 +179,7 @@ class BibtexBrowsertest extends TestCase
     public function testMultiSearch2()
     {
         $btb = $this->createDB();
-        $q = [Q_AUTHOR => 'monperrus|ducasse'];
+        $q = [Configuration::Q_AUTHOR => 'monperrus|ducasse'];
         $results = $btb->multisearch($q);
         $entry = $results[0];
         $this->assertCount(1, $results);
@@ -188,18 +189,18 @@ class BibtexBrowsertest extends TestCase
     public function test_config_value(): void
     {
         // default value
-        $this->assertFalse(config_value('BIBTEXBROWSER_NO_DEFAULT'));
+        $this->assertFalse(Configuration::config_value('BIBTEXBROWSER_NO_DEFAULT'));
 
         // setting to true
         bibtexbrowser_configure('BIBTEXBROWSER_NO_DEFAULT', true);
-        $this->assertTrue(config_value('BIBTEXBROWSER_NO_DEFAULT'));
+        $this->assertTrue(Configuration::config_value('BIBTEXBROWSER_NO_DEFAULT'));
         ob_start();
         default_message();
         $this->assertEquals('', ob_get_clean());
 
         // setting to false
         bibtexbrowser_configure('BIBTEXBROWSER_NO_DEFAULT', false);
-        $this->assertFalse(config_value('BIBTEXBROWSER_NO_DEFAULT'));
+        $this->assertFalse(Configuration::config_value('BIBTEXBROWSER_NO_DEFAULT'));
         ob_start();
         default_message();
         $this->assertStringContainsString('Congratulations', ob_get_clean());
@@ -227,13 +228,13 @@ class BibtexBrowsertest extends TestCase
     public function testNoSlashInKey()
     {
         $btb = $this->createDB();
-        $q = [Q_SEARCH => 'Slash'];
+        $q = [Configuration::Q_SEARCH => 'Slash'];
         $results = $btb->multisearch($q);
         $this->assertCount(1, $results);
         $entry = $results[0];
         $this->assertStringContainsString('aKey-withSlash', $entry->toHTML());
 
-        $q = [Q_KEY => 'aKey-withSlash'];
+        $q = [Configuration::Q_KEY => 'aKey-withSlash'];
         $results = $btb->multisearch($q);
         $entry2 = $results[0];
         $this->assertSame($entry2, $entry);
@@ -337,7 +338,7 @@ class BibtexBrowsertest extends TestCase
         //print_r($metadata);
         $this->assertEquals('A Book', $metadata['og:title']);
         $this->assertEquals('article', $metadata['og:type']);
-        $this->assertTrue(1 == preg_match("#http:.*author=Martin\+Monperrus#", $metadata['og:author']));
+        $this->assertEquals(1, preg_match("#http:.*author=Martin\+Monperrus#", $metadata['og:author']));
         $this->assertEquals('2009', $metadata['og:published_time']);
     }
 
@@ -355,7 +356,6 @@ class BibtexBrowsertest extends TestCase
         $btb->update_internal('inline', $test_data);
 
         $first_entry = $btb->bibdb[array_keys($btb->bibdb)[0]];
-//    $this->assertTrue(strpos('A Book{} $\mbox{foo}$',$first_entry->toHTML());
         $this->assertEquals('A Book $\mbox{foo}$ tt $\boo{t}$', $first_entry->getTitle());
     }
 
@@ -386,7 +386,7 @@ class BibtexBrowsertest extends TestCase
     }
 
     // see https://github.com/monperrus/bibtexbrowser/pull/14
-    public function test_zotero()
+    public function test_zotero(): void
     {
         bibtexbrowser_configure('BIBTEXBROWSER_LINKS_TARGET', '_self');
         $test_data = fopen('php://memory', 'xb+');
@@ -849,10 +849,10 @@ class BibtexBrowsertest extends TestCase
         fwrite($test_data, $bibtex);
         fseek($test_data, 0);
         $db = new \BibtexBrowser\BibtexBrowser\BibDataBase();
-        $_GET[Q_FILE] = 'sample.bib';
+        $_GET[Configuration::Q_FILE] = 'sample.bib';
         $db->update_internal('inline', $test_data);
 
-        $d = new \BibtexBrowser\BibtexBrowser\SimpleDisplay();
+        $d = new SimpleDisplay();
         $d->setDB($db);
         ob_start();
         NoWrapper($d);
@@ -879,7 +879,6 @@ class BibtexBrowsertest extends TestCase
         ob_start();
         $d->display();
         $output = ob_get_clean();
-//         print($output);
         $this->assertEquals('keyWithoutYear', $d->entries[0]->getKey());
         $this->assertEquals('key2', $d->entries[1]->getKey());
         // the indices have been set by SimpleDisplay, by default the one at the top is the one withuut year (the first in $d->entries)
@@ -914,10 +913,10 @@ class BibtexBrowsertest extends TestCase
         $btb = new BibDataBase();
         $btb->load('bibacid-utf8.bib');
 
-        $display = new SimpleDisplay($btb, [Q_YEAR => '1997']);
+        $display = new SimpleDisplay($btb, [Configuration::Q_YEAR => '1997']);
         $display->display();
 
-        $display = new SimpleDisplay($btb, [Q_YEAR => '2010']);
+        $display = new SimpleDisplay($btb, [Configuration::Q_YEAR => '2010']);
         $display->display();
 
         $output = ob_get_clean();

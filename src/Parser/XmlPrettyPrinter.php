@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser\Parser;
 
-use BibtexBrowser\BibtexBrowser\Parser\ParserDelegateInterface;
-use const OUTPUT_ENCODING;
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 
 /** is a possible delegate for StateBasedBibParser.
  * usage:
@@ -16,7 +15,7 @@ class XmlPrettyPrinter implements ParserDelegateInterface
     public function beginFile()
     {
         header('Content-type: text/xml;');
-        print '<?xml version="1.0" encoding="' . OUTPUT_ENCODING . '"?>';
+        print '<?xml version="1.0" encoding="' . Configuration::OUTPUT_ENCODING . '"?>';
         print '<bibfile>';
     }
 

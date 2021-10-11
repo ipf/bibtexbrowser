@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
 
 /** is used for creating menus (by type, by year, by author, etc.).
@@ -23,13 +24,13 @@ class MenuManager
     /** The bibliographic database, an instance of class BibDataBase. */
     public $db;
 
-    public $type_size = TYPES_SIZE;
+    public $type_size = Configuration::TYPES_SIZE;
 
-    public $year_size = YEAR_SIZE;
+    public $year_size = Configuration::YEAR_SIZE;
 
-    public $author_size = AUTHORS_SIZE;
+    public $author_size = Configuration::AUTHORS_SIZE;
 
-    public $tag_size = TAGS_SIZE;
+    public $tag_size = Configuration::TAGS_SIZE;
 
     public function __construct()
     {
@@ -68,7 +69,7 @@ class MenuManager
         ?>
         <table>
             <tr>
-                <td class="rheader">Generated from <?php echo $_GET[Q_FILE]; ?></td>
+                <td class="rheader">Generated from <?php echo $_GET[Configuration::Q_FILE]; ?></td>
             </tr>
         </table>
         <?php
@@ -78,9 +79,9 @@ class MenuManager
     public function searchView()
     {
         ?>
-        <form action="?" method="get" target="<?php echo BIBTEXBROWSER_MENU_TARGET; ?>">
-            <input type="text" name="<?php echo Q_SEARCH; ?>" class="input_box" size="18"/>
-            <input type="hidden" name="<?php echo Q_FILE; ?>" value="<?php echo @$_GET[Q_FILE]; ?>"/>
+        <form action="?" method="get" target="<?php echo Configuration::BIBTEXBROWSER_MENU_TARGET; ?>">
+            <input type="text" name="<?php echo Configuration::Q_SEARCH; ?>" class="input_box" size="18"/>
+            <input type="hidden" name="<?php echo Configuration::Q_FILE; ?>" value="<?php echo @$_GET[Configuration::Q_FILE]; ?>"/>
             <br/>
             <input type="submit" value="search" class="input_box"/>
         </form>
@@ -97,9 +98,9 @@ class MenuManager
 
         $types['.*'] = 'all types';
         // retreive or calculate page number to display
-        $page = isset($_GET[Q_TYPE_PAGE]) ? (int) $_GET[Q_TYPE_PAGE] : 1;
+        $page = isset($_GET[Configuration::Q_TYPE_PAGE]) ? (int) $_GET[Configuration::Q_TYPE_PAGE] : 1;
 
-        $this->displayMenu('Types', $types, $page, $this->type_size, Q_TYPE_PAGE, BibEntry::Q_INNER_TYPE);
+        $this->displayMenu('Types', $types, $page, $this->type_size, Configuration::Q_TYPE_PAGE, BibEntry::Q_INNER_TYPE);
     }
 
     /** Displays and controls the authors menu in a table. */
@@ -109,7 +110,7 @@ class MenuManager
         $authors = $this->db->authorIndex();
 
         // determine the authors page to display
-        $page = isset($_GET[Q_AUTHOR_PAGE]) ? (int) $_GET[Q_AUTHOR_PAGE] : 1;
+        $page = isset($_GET[Configuration::Q_AUTHOR_PAGE]) ? (int) $_GET[Configuration::Q_AUTHOR_PAGE] : 1;
 
 
         $this->displayMenu(
@@ -117,8 +118,8 @@ class MenuManager
             $authors,
             $page,
             $this->author_size,
-            Q_AUTHOR_PAGE,
-            Q_AUTHOR
+            Configuration::Q_AUTHOR_PAGE,
+            Configuration::Q_AUTHOR
         );
     }
 
@@ -129,7 +130,7 @@ class MenuManager
         $tags = $this->db->tagIndex();
 
         // determine the authors page to display
-        $page = isset($_GET[Q_TAG_PAGE]) ? (int) $_GET[Q_TAG_PAGE] : 1;
+        $page = isset($_GET[Configuration::Q_TAG_PAGE]) ? (int) $_GET[Configuration::Q_TAG_PAGE] : 1;
 
         if (count($tags) > 0) {
             $this->displayMenu(
@@ -137,8 +138,8 @@ class MenuManager
                 $tags,
                 $page,
                 $this->tag_size,
-                Q_TAG_PAGE,
-                Q_TAG
+                Configuration::Q_TAG_PAGE,
+                Configuration::Q_TAG
             );
         }
     }
@@ -150,7 +151,7 @@ class MenuManager
         $years = $this->db->yearIndex();
 
         // determine the authors page to display
-        $page = isset($_GET[Q_YEAR_PAGE]) ? (int) $_GET[Q_YEAR_PAGE] : 1;
+        $page = isset($_GET[Configuration::Q_YEAR_PAGE]) ? (int) $_GET[Configuration::Q_YEAR_PAGE] : 1;
 
 
         $this->displayMenu(
@@ -158,8 +159,8 @@ class MenuManager
             $years,
             $page,
             $this->year_size,
-            Q_YEAR_PAGE,
-            Q_YEAR
+            Configuration::Q_YEAR_PAGE,
+            Configuration::Q_YEAR
         );
     }
 
@@ -272,7 +273,7 @@ class MenuManager
         foreach ($items as $key => $item) {
             if ($index >= $startIndex && $index < $endIndex) {
                 $href = $queryKey === 'year' ? makeHref([$queryKey => InternationalizationUtility::translate($item)]) : makeHref([$queryKey => $key]);
-                echo '<a ' . $href . ' target="' . BIBTEXBROWSER_MENU_TARGET . '">' . $item . "</a>\n";
+                echo '<a ' . $href . ' target="' . Configuration::BIBTEXBROWSER_MENU_TARGET . '">' . $item . "</a>\n";
                 echo "<div class=\"mini_se\"></div>\n";
             }
 

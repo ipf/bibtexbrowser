@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BibtexBrowser\BibtexBrowser\Display;
 
 use BibtexBrowser\BibtexBrowser\BibDataBase;
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 
 /** displays the publication records sorted by publication types (as configured by constant BIBLIOGRAPHYSECTIONS).
  * usage:
@@ -71,7 +72,7 @@ class AcademicDisplay implements DisplayInterface
         $this->db = new BibDataBase();
         $this->db->bibdb = $this->entries;
 
-        if (BIBTEXBROWSER_ACADEMIC_TOC !== true) {
+        if (Configuration::BIBTEXBROWSER_ACADEMIC_TOC !== true) {
             foreach (_DefaultBibliographySections() as $section) {
                 $this->search2html($section['query'], $section['title']);
             }
@@ -104,9 +105,9 @@ class AcademicDisplay implements DisplayInterface
 
             foreach ($sections as $section) {
                 echo "\n<a title=\"" . $section['anchor'] . '"></a>';
-                echo '<h' . BIBTEXBROWSER_HTMLHEADINGLEVEL . '>';
+                echo '<h' . Configuration::BIBTEXBROWSER_HTMLHEADINGLEVEL . '>';
                 echo $section['title'] . ' (' . $section['count'] . ')';
-                echo '</h' . BIBTEXBROWSER_HTMLHEADINGLEVEL . ">\n",
+                echo '</h' . Configuration::BIBTEXBROWSER_HTMLHEADINGLEVEL . ">\n",
                 $section['display']->display();
             }
         }

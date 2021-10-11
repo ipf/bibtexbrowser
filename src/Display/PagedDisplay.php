@@ -2,9 +2,8 @@
 
 namespace BibtexBrowser\BibtexBrowser\Display;
 
-use BibtexBrowser\BibtexBrowser\Display\DisplayInterface;
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 use BibtexBrowser\BibtexBrowser\Utility\TemplateUtility;
-use function bibtexbrowser_configuration;
 use function makeHref;
 use function query2title;
 
@@ -72,15 +71,15 @@ class PagedDisplay implements DisplayInterface
         $more = true;
 
         // computing $more
-        $index = ($this->page) * bibtexbrowser_configuration('PAGE_SIZE');
+        $index = ($this->page) * Configuration::bibtexbrowser_configuration('PAGE_SIZE');
         if (!isset($this->entries[$index])) {
             $more = false;
         }
 
         $this->menu($less, $more);
         TemplateUtility::print_header_layout();
-        for ($i = 0; $i < bibtexbrowser_configuration('PAGE_SIZE'); ++$i) {
-            $index = ($this->page - 1) * bibtexbrowser_configuration('PAGE_SIZE') + $i;
+        for ($i = 0; $i < Configuration::bibtexbrowser_configuration('PAGE_SIZE'); ++$i) {
+            $index = ($this->page - 1) * Configuration::bibtexbrowser_configuration('PAGE_SIZE') + $i;
             if (isset($this->entries[$index])) {
                 $bib = $this->entries[$index];
                 echo $bib->toHTML(true);

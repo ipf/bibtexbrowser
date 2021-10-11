@@ -10,7 +10,7 @@ class CharacterUtility
      * converts latex chars to HTML entities.
      * (I still look for a comprehensive translation table from late chars to html, better than [[http://isdc.unige.ch/Newsletter/help.html]])
      */
-    public static function latex2html($line, $do_clean_extra_bracket = true)
+    public static function latex2html(string $line, bool $do_clean_extra_bracket = true)
     {
         $line = preg_replace('#([^\\\])~#', '\\1&nbsp;', $line);
 
@@ -133,7 +133,7 @@ class CharacterUtility
             $line = str_replace('__MATH' . $i . '__', $math, $line);
         }
 
-        return $line;
+        return (string) $line;
     }
 
     /**
@@ -145,9 +145,9 @@ class CharacterUtility
         return urlencode($s ?? '');
     }
 
-    public static function char2html_case_sensitive($line, $latexmodifier, $char, $entitiyfragment)
+    public static function char2html_case_sensitive(string $line, $latexmodifier, $char, $entitiyfragment): string
     {
-        return preg_replace(
+        return (string) preg_replace(
             '/\\{?\\\\' . preg_quote($latexmodifier, '/') . ' ?\\{?' . $char . '\\}?/',
             '&' . $char . '' . $entitiyfragment . ';',
             $line
@@ -158,7 +158,7 @@ class CharacterUtility
      * encapsulates the conversion of a single latex chars to the corresponding HTML entity.
      * It expects a **lower-case** char.
      */
-    public static function char2html($line, $latexmodifier, $char, $entitiyfragment)
+    public static function char2html(string $line, $latexmodifier, $char, $entitiyfragment)
     {
         $line = CharacterUtility::char2html_case_sensitive($line, $latexmodifier, strtoupper($char), $entitiyfragment);
         return CharacterUtility::char2html_case_sensitive($line, $latexmodifier, strtolower($char), $entitiyfragment);
@@ -167,7 +167,7 @@ class CharacterUtility
     /**
      * is an extended version of the trim function, removes linebreaks, tabs, etc.
      */
-    public static function xtrim($line)
+    public static function xtrim(string $line): string
     {
         $line = trim($line);
         // we remove the unneeded line breaks
@@ -179,6 +179,6 @@ class CharacterUtility
         $line = str_replace(["\r\n", "\r", "\n", "\t"], ' ', $line);
         // remove superfluous spaces e.g. John+++Bar
         $line = preg_replace('# {2,}#', ' ', $line);
-        return $line;
+        return (string) $line;
     }
 }

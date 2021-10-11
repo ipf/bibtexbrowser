@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser;
 
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 use BibtexBrowser\BibtexBrowser\Display\BibEntryDisplay;
 use BibtexBrowser\BibtexBrowser\Display\BibtexDisplay;
+use BibtexBrowser\BibtexBrowser\Display\RSSDisplay;
 
 /** is responsible for transforming a query string of $_GET[..] into a publication list.
  * usage:
@@ -34,7 +36,7 @@ class Dispatcher
      * the wrapper of selected entries. The default is an HTML wrapper
      *  It could also be a NoWrapper when you include your pub list in your home page
      */
-    public $wrapper = BIBTEXBROWSER_DEFAULT_TEMPLATE;
+    public $wrapper = Configuration::BIBTEXBROWSER_DEFAULT_TEMPLATE;
 
     /** The BibDataBase object */
     public $db = null;
@@ -49,7 +51,7 @@ class Dispatcher
         // by default set it from $_GET[Q_FILE]
         // first we set the database (load from disk or parse the bibtex file)
         if ($this->db == null) {
-            list($db, $parsed, $updated, $saved) = _zetDB($_GET[Q_FILE]);
+            list($db, $parsed, $updated, $saved) = _zetDB($_GET[Configuration::Q_FILE]);
             $this->db = $db;
         }
 
@@ -67,8 +69,8 @@ class Dispatcher
             return;
         }
 
-        if (!isset($_GET[Q_FILE])) {
-            die('$_GET[\'' . Q_FILE . "'] is not set!");
+        if (!isset($_GET[Configuration::Q_FILE])) {
+            die('$_GET[\'' . Configuration::Q_FILE . "'] is not set!");
         }
 
         // is the publication list included in another page?
@@ -92,9 +94,9 @@ class Dispatcher
         if ($this->query !== []) {
 
             // first test for inconsistent queries
-            if (isset($this->query[Q_ALL]) && count($this->query) > 1) {
+            if (isset($this->query[Configuration::Q_ALL]) && count($this->query) > 1) {
                 // we discard the Q_ALL, it helps in embedded mode
-                unset($this->query[Q_ALL]);
+                unset($this->query[Configuration::Q_ALL]);
             }
 
             $selectedEntries = $this->getDB()->multisearch($this->query);
@@ -110,7 +112,7 @@ class Dispatcher
             //echo '<pre>';print_r($selectedEntries);echo '</pre>';
 
             if ($this->displayer == '') {
-                $this->displayer = bibtexbrowser_configuration('BIBTEXBROWSER_DEFAULT_DISPLAY');
+                $this->displayer = Configuration::BIBTEXBROWSER_DEFAULT_DISPLAY;
             }
         }
 
@@ -143,7 +145,7 @@ class Dispatcher
             $this->clearQuery();
         } elseif (headers_sent() == false) {
             /* to avoid sending an unnecessary frameset */
-            header('Location: ' . $_SERVER['SCRIPT_NAME'] . '?frameset&bib=' . $_GET[Q_FILE]);
+            header('Location: ' . $_SERVER['SCRIPT_NAME'] . '?frameset&bib=' . $_GET[Configuration::Q_FILE]);
         }
     }
 
@@ -151,18 +153,18 @@ class Dispatcher
     public function clearQuery()
     {
         $params = [
-            Q_ALL,
+            Configuration::Q_ALL,
             'rss',
             'astext',
-            Q_SEARCH,
-            Q_EXCLUDE,
-            Q_YEAR,
-            EDITOR,
-            Q_TAG,
-            Q_AUTHOR,
-            Q_TYPE,
-            Q_ACADEMIC,
-            Q_KEY
+            Configuration::Q_SEARCH,
+            Configuration::Q_EXCLUDE,
+            Configuration::Q_YEAR,
+            Configuration::EDITOR,
+            Configuration::Q_TAG,
+            Configuration::Q_AUTHOR,
+            Configuration::Q_TYPE,
+            Configuration::Q_ACADEMIC,
+            Configuration::Q_KEY
         ];
         foreach ($params as $p) {
             unset($_GET[$p]);
@@ -171,7 +173,7 @@ class Dispatcher
 
     public function all()
     {
-        $this->query[Q_ALL] = 1;
+        $this->query[Configuration::Q_ALL] = 1;
     }
 
     public function display()
@@ -193,50 +195,50 @@ class Dispatcher
 
     public function search()
     {
-        if (preg_match('#utf-?8#i', OUTPUT_ENCODING)) {
-            $_GET[Q_SEARCH] = urldecode($_GET[Q_SEARCH]);
+        if (preg_match('#utf-?8#i', Configuration::OUTPUT_ENCODING)) {
+            $_GET[Configuration::Q_SEARCH] = urldecode($_GET[Configuration::Q_SEARCH]);
         }
 
-        $this->query[Q_SEARCH] = $_GET[Q_SEARCH];
+        $this->query[Configuration::Q_SEARCH] = $_GET[Configuration::Q_SEARCH];
     }
 
     public function exclude()
     {
-        $this->query[Q_EXCLUDE] = $_GET[Q_EXCLUDE];
+        $this->query[Configuration::Q_EXCLUDE] = $_GET[Configuration::Q_EXCLUDE];
     }
 
     public function year()
     {
         // we may want the latest
-        if ($_GET[Q_YEAR] == 'latest') {
+        if ($_GET[Configuration::Q_YEAR] === 'latest') {
             $years = $this->getDB()->yearIndex();
-            $_GET[Q_YEAR] = array_shift($years);
+            $_GET[Configuration::Q_YEAR] = array_shift($years);
         }
 
-        $this->query[Q_YEAR] = $_GET[Q_YEAR];
+        $this->query[Configuration::Q_YEAR] = $_GET[Configuration::Q_YEAR];
     }
 
     public function editor()
     {
-        $this->query[EDITOR] = $_GET[EDITOR];
+        $this->query[Configuration::EDITOR] = $_GET[Configuration::EDITOR];
     }
 
-    public function keywords()
+    public function keywords(): void
     {
-        $this->query[Q_TAG] = $_GET[Q_TAG];
+        $this->query[Configuration::Q_TAG] = $_GET[Configuration::Q_TAG];
     }
 
-    public function author()
+    public function author(): void
     {
         // Friday, October 29 2010
         // changed from 'author' to '_author'
         // in order to search at the same time "Joe Dupont" an "Dupont, Joe"
-        $this->query[Q_INNER_AUTHOR] = $_GET[Q_AUTHOR];
+        $this->query[Q_INNER_AUTHOR] = $_GET[Configuration::Q_AUTHOR];
     }
 
-    public function type()
+    public function type(): void
     {
-        $this->query[Q_TYPE] = $_GET[Q_TYPE];
+        $this->query[Configuration::Q_TYPE] = $_GET[Configuration::Q_TYPE];
     }
 
     /**
@@ -248,9 +250,9 @@ class Dispatcher
      * (a range of years) separated by anything non-numerical.
      *
      */
-    public function range()
+    public function range(): void
     {
-        $ranges = explode(',', $_GET[Q_RANGE]);
+        $ranges = explode(',', $_GET[Configuration::Q_RANGE]);
         $result = [];
 
         $nextYear = 1 + (int)date('Y');
@@ -291,10 +293,10 @@ class Dispatcher
             $result[] = [$lower, $upper];
         }
 
-        $this->query[Q_RANGE] = $result;
+        $this->query[Configuration::Q_RANGE] = $result;
     }
 
-    public function menu()
+    public function menu(): string
     {
         $menu = new MenuManager();
         $menu->setDB($this->getDB());
@@ -305,7 +307,7 @@ class Dispatcher
     }
 
     /** the academic keyword in URLs switch from a year based viey to a publication type based view */
-    public function academic()
+    public function academic(): void
     {
         $this->displayer = 'AcademicDisplay';
 
@@ -319,9 +321,9 @@ class Dispatcher
         // 123 == true is true (and whatever number different from 0
         // 0 == true is true
         // '1'!=1 is **false**
-        if (!isset($_GET[Q_AUTHOR]) && $_GET[Q_ACADEMIC] !== true && $_GET[Q_ACADEMIC] !== 'true' && $_GET[Q_ACADEMIC] != 1 && $_GET[Q_ACADEMIC] != '') {
-            $_GET[Q_AUTHOR] = $_GET[Q_ACADEMIC];
-            $this->query[Q_AUTHOR] = $_GET[Q_ACADEMIC];
+        if (!isset($_GET[Configuration::Q_AUTHOR]) && $_GET[Configuration::Q_ACADEMIC] !== true && $_GET[Configuration::Q_ACADEMIC] !== 'true' && $_GET[Configuration::Q_ACADEMIC] != 1 && $_GET[Configuration::Q_ACADEMIC] != '') {
+            $_GET[Configuration::Q_AUTHOR] = $_GET[Configuration::Q_ACADEMIC];
+            $this->query[Configuration::Q_AUTHOR] = $_GET[Configuration::Q_ACADEMIC];
         }
     }
 
@@ -329,8 +331,8 @@ class Dispatcher
     {
         $entries = [];
         // case 1: this is a single key
-        if ($this->getDB()->contains($_GET[Q_KEY])) {
-            $entries[] = $this->getDB()->getEntryByKey($_GET[Q_KEY]);
+        if ($this->getDB()->contains($_GET[Configuration::Q_KEY])) {
+            $entries[] = $this->getDB()->getEntryByKey($_GET[Configuration::Q_KEY]);
             if (isset($_GET['astext'])) {
                 $bibdisplay = new BibtexDisplay();
                 $bibdisplay->setEntries($entries);
@@ -346,8 +348,8 @@ class Dispatcher
         }
 
         // case two: multiple keys
-        if (preg_match('#[|,]#', $_GET[Q_KEY])) {
-            $this->query[Q_SEARCH] = str_replace(',', '|', $_GET[Q_KEY]);
+        if (preg_match('#[|,]#', $_GET[Configuration::Q_KEY])) {
+            $this->query[Configuration::Q_SEARCH] = str_replace(',', '|', $_GET[Configuration::Q_KEY]);
         } else {
             nonExistentBibEntryError();
         }
@@ -355,18 +357,13 @@ class Dispatcher
 
     public function keys()
     {
-        // Create array from list of bibtex entries
-        if (get_magic_quotes_gpc()) {
-            $_GET[Q_KEYS] = stripslashes($_GET[Q_KEYS]);
-        }
-
-        $_GET[Q_KEYS] = (array)json_decode(urldecode($_GET[Q_KEYS])); // decode and cast the object into an (associative) array
+        $_GET[Configuration::Q_KEYS] = (array)json_decode(urldecode($_GET[Configuration::Q_KEYS])); // decode and cast the object into an (associative) array
         // Make the array 1-based (keeps the string keys unchanged)
-        array_unshift($_GET[Q_KEYS], '__DUMMY__');
-        unset($_GET[Q_KEYS][0]);
+        array_unshift($_GET[Configuration::Q_KEYS], '__DUMMY__');
+        unset($_GET[Configuration::Q_KEYS][0]);
         // Keep a flipped version for efficient search in getRawAbbrv()
-        $_GET[Q_INNER_KEYS_INDEX] = array_flip($_GET[Q_KEYS]);
-        $this->query[Q_KEYS] = $_GET[Q_KEYS];
+        $_GET[Q_INNER_KEYS_INDEX] = array_flip($_GET[Configuration::Q_KEYS]);
+        $this->query[Configuration::Q_KEYS] = $_GET[Configuration::Q_KEYS];
     }
 
     /** is used to remotely analyzed a situation */
@@ -376,7 +373,7 @@ class Dispatcher
         echo 'php version: ' . phpversion() . "\n";
         echo "bibtexbrowser version: __GITHUB__\n";
         echo 'dir: ' . decoct(fileperms(__DIR__)) . "\n";
-        echo 'bibtex file: ' . decoct(fileperms($_GET[Q_FILE])) . "\n";
+        echo 'bibtex file: ' . decoct(fileperms($_GET[Configuration::Q_FILE])) . "\n";
         exit;
     }
 
@@ -388,13 +385,13 @@ class Dispatcher
         <html xmlns="http://www.w3.org/1999/xhtml">
         <head>
             <meta name="generator" content="bibtexbrowser v__GITHUB__"/>
-            <meta http-equiv="Content-Type" content="text/html; charset=<?php echo OUTPUT_ENCODING ?>"/>
-            <title>You are browsing <?php echo htmlentities($_GET[Q_FILE], ENT_QUOTES); ?> with bibtexbrowser</title>
+            <meta http-equiv="Content-Type" content="text/html; charset=<?php echo Configuration::OUTPUT_ENCODING ?>"/>
+            <title>You are browsing <?php echo htmlentities($_GET[Configuration::Q_FILE], ENT_QUOTES); ?> with bibtexbrowser</title>
         </head>
         <frameset cols="15%,*">
-            <frame name="menu" src="<?php echo '?' . Q_FILE . '=' . urlencode($_GET[Q_FILE]) . '&amp;menu'; ?>"/>
+            <frame name="menu" src="<?php echo '?' . Configuration::Q_FILE . '=' . urlencode($_GET[Configuration::Q_FILE]) . '&amp;menu'; ?>"/>
             <frame name="main"
-                   src="<?php echo '?' . Q_FILE . '=' . urlencode($_GET[Q_FILE]) . '&amp;' . BIBTEXBROWSER_DEFAULT_FRAME ?>"/>
+                   src="<?php echo '?' . Configuration::Q_FILE . '=' . urlencode($_GET[Configuration::Q_FILE]) . '&amp;' . BIBTEXBROWSER_DEFAULT_FRAME ?>"/>
         </frameset>
         </html>
 

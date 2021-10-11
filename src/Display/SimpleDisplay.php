@@ -3,6 +3,7 @@
 namespace BibtexBrowser\BibtexBrowser\Display;
 
 use BibtexBrowser\BibtexBrowser\BibDataBase;
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
 use BibtexBrowser\BibtexBrowser\Utility\TemplateUtility;
 
@@ -23,9 +24,9 @@ class SimpleDisplay implements DisplayInterface
 
     private array $options = [];
 
-    private array $entries = [];
+    public array $entries = [];
 
-    private int $headingLevel = BIBTEXBROWSER_HTMLHEADINGLEVEL;
+    private int $headingLevel = Configuration::BIBTEXBROWSER_HTMLHEADINGLEVEL;
 
     public function __construct(?BibDataBase $db = null, array $query = [])
     {
@@ -53,7 +54,7 @@ class SimpleDisplay implements DisplayInterface
 
     public function metadata(): array
     {
-        if (BIBTEXBROWSER_ROBOTS_NOINDEX) {
+        if (Configuration::BIBTEXBROWSER_ROBOTS_NOINDEX) {
             return [['robots', 'noindex']];
         }
 
@@ -78,7 +79,7 @@ class SimpleDisplay implements DisplayInterface
 
     public function newest($entries)
     {
-        return array_slice($entries, 0, BIBTEXBROWSER_NEWEST);
+        return array_slice($entries, 0, Configuration::BIBTEXBROWSER_NEWEST);
     }
 
     public function indexDown()
@@ -142,14 +143,14 @@ class SimpleDisplay implements DisplayInterface
 
         if ($this->options) {
             foreach ($this->options as $fname => $opt) {
-                $this->$fname($opt, $entries);
+                $this->$fname($opt, $this->entries);
             }
         }
 
-        if (BIBTEXBROWSER_DEBUG) {
-            echo 'Style: ' . bibtexbrowser_configuration('BIBLIOGRAPHYSTYLE') . '<br/>';
-            echo 'Order: ' . ORDER_FUNCTION . '<br/>';
-            echo 'Abbrv: ' . c('ABBRV_TYPE') . '<br/>';
+        if (Configuration::BIBTEXBROWSER_DEBUG) {
+            echo 'Style: ' . Configuration::bibtexbrowser_configuration('BIBLIOGRAPHYSTYLE') . '<br/>';
+            echo 'Order: ' . Configuration::ORDER_FUNCTION . '<br/>';
+            echo 'Abbrv: ' . Configuration::c('ABBRV_TYPE') . '<br/>';
             echo 'Options: ' . @implode(',', $this->options) . '<br/>';
         }
 
@@ -176,13 +177,13 @@ class SimpleDisplay implements DisplayInterface
             return true;
         }
 
-        $f = ORDER_FUNCTION;
+        $f = Configuration::ORDER_FUNCTION;
         return $f($pred, $bib) != 0;
     }
 
     public function sectionHeader($bib, $pred): string
     {
-        switch (BIBTEXBROWSER_LAYOUT) {
+        switch (Configuration::BIBTEXBROWSER_LAYOUT) {
             case 'table':
                 return '<tr><td colspan="2" class="' . $this->headerCSS . '">' . $bib->getYear() . '</td></tr>' . "\n";
                 break;
@@ -195,7 +196,7 @@ class SimpleDisplay implements DisplayInterface
                     $string .= "</ul>\n";
                 }
 
-                $year = $bib->hasField(YEAR) ? $bib->getYear() : InternationalizationUtility::translate('No date');
+                $year = $bib->hasField(Configuration::YEAR) ? $bib->getYear() : InternationalizationUtility::translate('No date');
                 return $string . '<h' . $this->headingLevel . '>' . $year . '</h' . $this->headingLevel . ">\n<ul class=\"result\">\n";
             default:
                 return '';

@@ -2,8 +2,7 @@
 
 namespace BibtexBrowser\BibtexBrowser\Display;
 
-use function c;
-use const BOOKTITLE;
+use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 
 /** displays a single bib entry.
  * usage:
@@ -97,26 +96,26 @@ class BibEntryDisplay implements DisplayInterface
     {
         $result = [];
 
-        if (c('BIBTEXBROWSER_ROBOTS_NOINDEX')) {
+        if (Configuration::c('BIBTEXBROWSER_ROBOTS_NOINDEX')) {
             $result[] = ['robots', 'noindex'];
         }
 
-        if (c('METADATA_GS')) {
+        if (Configuration::c('METADATA_GS')) {
             $result = $this->metadata_google_scholar($result);
         }
 
         // end Google Scholar
 
         // a fallback to essential dublin core
-        if (c('METADATA_DC')) {
+        if (Configuration::c('METADATA_DC')) {
             $result = $this->metadata_dublin_core($result);
         }
 
-        if (c('METADATA_OPENGRAPH')) {
+        if (Configuration::c('METADATA_OPENGRAPH')) {
             $result = $this->metadata_opengraph($result);
         }
 
-        if (c('METADATA_EPRINTS')) {
+        if (Configuration::c('METADATA_EPRINTS')) {
             $result = $this->metadata_eprints($result);
         }
 
@@ -199,8 +198,8 @@ class BibEntryDisplay implements DisplayInterface
         }
 
         if ($this->bib->getType() === 'inproceedings' || $this->bib->getType() === 'conference') {
-            $result[] = ['citation_conference_title', $this->bib->getField(BOOKTITLE)];
-            $result[] = ['citation_conference', $this->bib->getField(BOOKTITLE)];
+            $result[] = ['citation_conference_title', $this->bib->getField(Configuration::BOOKTITLE)];
+            $result[] = ['citation_conference', $this->bib->getField(Configuration::BOOKTITLE)];
         }
 
         if ($this->bib->getType() === 'phdthesis'
@@ -276,7 +275,7 @@ class BibEntryDisplay implements DisplayInterface
 
         if ($this->bib->getType() === 'inproceedings' || $this->bib->getType() === 'conference') {
             $result[] = ['eprints.type', 'proceeding'];
-            $result[] = ['eprints.book_title', $this->bib->getField(BOOKTITLE)];
+            $result[] = ['eprints.book_title', $this->bib->getField(Configuration::BOOKTITLE)];
         }
 
         if ($this->bib->getType() === 'phdthesis'
