@@ -3,7 +3,6 @@
 namespace BibtexBrowser\BibtexBrowser\Display;
 
 use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
-use BibtexBrowser\BibtexBrowser\Display\DisplayInterface;
 
 /** is used to create an subset of a bibtex file.
  * usage:

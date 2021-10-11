@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace BibtexBrowser\BibtexBrowser\Display;
 
-use BibtexBrowser\BibtexBrowser\Display\DisplayInterface;
 use BibtexBrowser\BibtexBrowser\Utility\InternationalizationUtility;
 
 /** handles queries with no result */

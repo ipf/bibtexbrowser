@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace BibtexBrowser\BibtexBrowser\Display;
 
 use BibtexBrowser\BibtexBrowser\BibDataBase;
-use BibtexBrowser\BibtexBrowser\Display\DisplayInterface;
 
 /** displays the latest modified bibtex entries.
  * usage:
@@ -21,9 +20,9 @@ class NewEntriesDisplay implements DisplayInterface
 {
     public int $n = 5;
 
-    public $db;
+    public BibDataBase $db;
 
-    public function setDB($bibdatabase)
+    public function setDB(BibDataBase $bibdatabase): void
     {
         $this->db = $bibdatabase;
     }

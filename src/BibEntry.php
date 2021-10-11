@@ -761,14 +761,16 @@ class BibEntry implements \Stringable
     }
 
     /** Sets the abbreviation (e.g. [OOPSLA] or [1]) */
-    public function setAbbrv($abbrv)
+    public function setAbbrv($abbrv): static
     {
         $this->abbrv = $abbrv;
         return $this;
     }
 
-    /** Returns the verbatim text of this bib entry. */
-    public function getText()
+    /** Returns the verbatim text of this bib entry.
+     * @throws \Exception
+     */
+    public function getText(): string
     {
         if (Configuration::BIBTEXBROWSER_BIBTEX_VIEW === 'original') {
             return $this->text;
@@ -792,9 +794,8 @@ class BibEntry implements \Stringable
     /** Returns true if this bib entry contains the given phrase (PREG regexp)
      * in the given field. if $field is null, all fields are considered.
      * Note that this method is NOT case sensitive */
-    public function hasPhrase($phrase, $field = null)
+    public function hasPhrase(string $phrase, $field = null)
     {
-
         // we have to search in the formatted fields and not in the raw entry
         // i.e. all latex markups are not considered for searches
         if (!$field) {

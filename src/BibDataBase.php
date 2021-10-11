@@ -98,7 +98,7 @@ class BibDataBase
     }
 
     /** Returns the $n latest modified bibtex entries/ */
-    public function getLatestEntries($n)
+    public function getLatestEntries(?int $n): array
     {
         $order = 'compare_bib_entry_by_mtime';
         $array = $this->bibdb; // array passed by value
@@ -113,7 +113,7 @@ class BibDataBase
         return $this->bibdb;
     }
 
-    /** tests wheter the database contains a bib entry with $key */
+    /** tests whether the database contains a bib entry with $key */
     public function contains($key): bool
     {
         return isset($this->bibdb[$key]);
@@ -122,7 +122,7 @@ class BibDataBase
     /** Returns all entries categorized by types. The returned value is
      * a hashtable from types to arrays of bib entries.
      */
-    public function getEntriesByTypes()
+    public function getEntriesByTypes(): array
     {
         $result = [];
         foreach ($this->bibdb as $b) {
@@ -266,23 +266,23 @@ class BibDataBase
         }
 
         $result = [];
-
+        /** @var BibEntry $bib */
         foreach ($this->bibdb as $bib) {
             $entryisselected = true;
             foreach ($query as $field => $fragment) {
                 $field = strtolower($field);
-                if ($field == Configuration::Q_SEARCH) {
+                if ($field === Configuration::Q_SEARCH) {
                     // we search in the whole bib entry
                     if (!$bib->hasPhrase($fragment)) {
                         $entryisselected = false;
                         break;
                     }
-                } elseif ($field == Configuration::Q_EXCLUDE) {
+                } elseif ($field === Configuration::Q_EXCLUDE) {
                     if ($bib->hasPhrase($fragment)) {
                         $entryisselected = false;
                         break;
                     }
-                } elseif ($field == Configuration::Q_TYPE || $field == BibEntry::Q_INNER_TYPE) {
+                } elseif ($field === Configuration::Q_TYPE || $field === BibEntry::Q_INNER_TYPE) {
                     // types are always exact search
                     // remarks Ken
                     // type:"book" should only select book (and not inbook, book, bookchapter)

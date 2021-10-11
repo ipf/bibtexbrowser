@@ -7,6 +7,7 @@ namespace BibtexBrowser\BibtexBrowser;
 use BibtexBrowser\BibtexBrowser\Configuration\Configuration;
 use BibtexBrowser\BibtexBrowser\Display\BibEntryDisplay;
 use BibtexBrowser\BibtexBrowser\Display\BibtexDisplay;
+use BibtexBrowser\BibtexBrowser\Display\NotFoundDisplay;
 use BibtexBrowser\BibtexBrowser\Display\RSSDisplay;
 
 /** is responsible for transforming a query string of $_GET[..] into a publication list.
@@ -102,14 +103,12 @@ class Dispatcher
             $selectedEntries = $this->getDB()->multisearch($this->query);
 
             if (count($selectedEntries) == 0) {
-                $this->displayer = 'NotFoundDisplay';
+                $this->displayer = NotFoundDisplay::class;
             }
 
             // default order
             uasort($selectedEntries, 'compare_bib_entries');
             $selectedEntries = array_values($selectedEntries);
-
-            //echo '<pre>';print_r($selectedEntries);echo '</pre>';
 
             if ($this->displayer == '') {
                 $this->displayer = Configuration::BIBTEXBROWSER_DEFAULT_DISPLAY;
