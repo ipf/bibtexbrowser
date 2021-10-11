@@ -24,13 +24,13 @@ class MenuManager
     /** The bibliographic database, an instance of class BibDataBase. */
     public $db;
 
-    public $type_size = Configuration::TYPES_SIZE;
+    public int $type_size = Configuration::TYPES_SIZE;
 
-    public $year_size = Configuration::YEAR_SIZE;
+    public int $year_size = Configuration::YEAR_SIZE;
 
-    public $author_size = Configuration::AUTHORS_SIZE;
+    public int $author_size = Configuration::AUTHORS_SIZE;
 
-    public $tag_size = Configuration::TAGS_SIZE;
+    public int $tag_size = Configuration::TAGS_SIZE;
 
     public function __construct()
     {

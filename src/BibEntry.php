@@ -422,10 +422,9 @@ class BibEntry implements \Stringable
                 $res[] = trim($array[$i]);
             }
         }
-        if (count($array) > 0) {
-            if (!preg_match('#\}#', CharacterUtility::latex2html($array[count($array) - 1], false))) {
-                $res[] = trim($array[count($array) - 1] ?? '');
-            }
+
+        if (count($array) > 0 && !preg_match('#\}#', CharacterUtility::latex2html($array[count($array) - 1], false))) {
+            $res[] = trim($array[count($array) - 1] ?? '');
         }
 
         return $res;

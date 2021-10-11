@@ -72,7 +72,7 @@ class AcademicDisplay implements DisplayInterface
         $this->db = new BibDataBase();
         $this->db->bibdb = $this->entries;
 
-        if (Configuration::BIBTEXBROWSER_ACADEMIC_TOC !== true) {
+        if (!Configuration::BIBTEXBROWSER_ACADEMIC_TOC) {
             foreach (_DefaultBibliographySections() as $section) {
                 $this->search2html($section['query'], $section['title']);
             }
